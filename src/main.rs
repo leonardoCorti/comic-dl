@@ -1,6 +1,7 @@
 use reqwest::blocking::Client;
 use scraper::{Html, Selector};
-use std::env;
+use std::collections::VecDeque;
+use std::{env, thread};
 use std::fs::{self, File};
 use std::io::{self};
 use std::path::Path;
@@ -51,10 +52,48 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         fs::create_dir(&comic_name)?;
     }
 
-    for link in links {
-        download_issue(&client, &comic_name, link.value().attr("href").unwrap(), link.inner_html())?;
-    }
+    let args: Vec<_> =  std::env::args().collect();
+    let number_of_jobs = args.iter().filter(|e| e.starts_with("-J")).last();
+    match number_of_jobs{
+        Some(jobs_argument) => {
+            let jobs_quantity: usize = jobs_argument.replace("-J", "").parse()?;
+            println!("starting download with {jobs_quantity} threads" );
+            let mut handles: VecDeque<thread::JoinHandle<()>> = VecDeque::new();
+            for link in links {
+                if handles.len() == jobs_quantity {
+                    if let Some(handle) = handles.pop_front() {
+                        handle.join().unwrap();
+                    }
+                }
+                let client_clone = client.clone();
+                let comic_name_clone = comic_name.to_string();
+                let link_clone = link.value().attr("href").unwrap().to_string().clone();
+                let linkhtml = link.inner_html().clone();
 
+                let handle = thread::spawn(move  || {
+                    //let _ = download_issue(&client, &comic_name, link.value().attr("href").unwrap(), linkhtml );
+                    let _ = download_issue(&client_clone, &comic_name_clone, &link_clone, linkhtml);
+
+                });
+
+                handles.push_back(handle);
+            }
+
+            for handle in handles{
+                handle.join().unwrap();
+            }
+
+
+        },
+        None => {
+            for link in links {
+                match download_issue(&client, &comic_name, link.value().attr("href").unwrap(), link.inner_html()) {
+                    Ok(_) => {},
+                    Err(_) => {println!("couldn't download something")},
+                }
+            }
+        },
+    }
     Ok(())
 }
 
