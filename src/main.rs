@@ -3,37 +3,38 @@ use scraper::{Html, Selector};
 use std::collections::VecDeque;
 use std::{env, thread};
 use std::fs::{self, File};
-use std::io::{self};
+use std::io::{self, Write};
 use std::path::Path;
 use regex::Regex;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Check if an input argument is provided
+    // parsing input
     let args: Vec<String> = env::args().collect();
+    let url: String;
     if args.len() < 2 {
-        eprintln!("No input provided. Halting the script.");
-        std::process::exit(1);
+        println!("insert link to comic: ");
+        io::stdout().flush().unwrap();
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).expect("couldn't read from terminal");
+        url = input.trim().to_string();
+    } else {
+        url = args[1].clone();
     }
 
-    // URL to download
-    let url = &args[1];
     let comic_name = url.replace("https://readcomic.me/comic/", "");
 
     let client = Client::new();
-    // Download the content
     let response = client.get(url).send()?;
     if !response.status().is_success() {
         eprintln!("Error downloading the content: {:?}", response.status());
         std::process::exit(1);
     }
 
-    // Parse the HTML content
     let body = response.text()?;
     let document = Html::parse_document(&body);
 
-    // Find the table with class "listings"
     let selector = Selector::parse("#nt_listchapter").unwrap();
     let table = document.select(&selector).next();
 
@@ -42,11 +43,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 
-    // Find all link tags within the table
     let link_selector = Selector::parse("a").unwrap();
     let links: Vec<_> = table.unwrap().select(&link_selector).collect();
 
-    // Output the links
     println!("Downloading {}", comic_name);
     if !Path::new(&comic_name).exists() {
         fs::create_dir(&comic_name)?;
