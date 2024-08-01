@@ -1,4 +1,4 @@
-use std::{fmt::Debug, path::Path};
+use std::{fmt::Debug, path::{Path, PathBuf}};
 
 pub mod readcomic_me;
 
@@ -41,7 +41,7 @@ pub trait SiteDownloaderFunctions {
     fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError>;
     fn download_page(&self, link: &str, issue_path: &Path, page_number: u32) -> Result<(), SiteDownloaderError>;
     fn get_issues_list(&self, link: &str) -> Result<Vec<Issue>, SiteDownloaderError>;
-    fn create_cbz(&self) -> Result<(), SiteDownloaderError>;
+    fn create_cbz(&self, issue_name: &Issue, issue_path: PathBuf) -> Result<(), SiteDownloaderError>;
 }
 
 pub trait SiteDownloader: Debug + SiteDownloaderFunctions {}

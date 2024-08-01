@@ -57,30 +57,7 @@ impl SiteDownloaderFunctions for ReadcomicMe{
             self.download_page(&page_link, &issue_path, (n+1).try_into().unwrap()).unwrap();
         }
 
-
-        
-        let out_filename = format!("{}-{}.cbz", self.comic_name, issue_name.name); 
-        let out_path = self.download_path.join(out_filename);
-        //println!("out_path is {:?}", out_path);
-        let file = File::create(&out_path).expect("error creating cbz");
-        let mut zip = zip::ZipWriter::new(file);
-
-        let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
-        let files: Vec<_> = fs::read_dir(&issue_path).expect("error creating cbz")
-            .filter_map(|entry| entry.ok())
-            .filter_map(|entry| entry.path().to_str().map(|s| s.to_string()))
-            .collect();
-
-        for filename in files {
-            let name = Path::new(&filename).file_name().unwrap().to_str().unwrap();
-            let mut f = File::open(&filename).expect("error creating cbz");
-            zip.start_file(name, options).expect("error creating cbz");
-            io::copy(&mut f, &mut zip).expect("error creating cbz");
-        }
-        zip.finish().expect("error creating cbz");
-        fs::remove_dir_all(&issue_path).expect("couldn't clean source directory");
-
-
+        self.create_cbz(issue_name, issue_path)?;
 
         return Ok(());
     }
@@ -126,7 +103,26 @@ impl SiteDownloaderFunctions for ReadcomicMe{
         return Ok(vec);
     }
 
-    fn create_cbz(&self) -> Result<(), SiteDownloaderError> {
+    fn create_cbz(&self, issue_name: &Issue, issue_path: PathBuf) -> Result<(), SiteDownloaderError> {
+        let out_filename = format!("{}-{}.cbz", self.comic_name, issue_name.name);
+        let out_path = self.download_path.join(out_filename);
+        let file = File::create(&out_path).expect("error creating cbz");
+        let mut zip = zip::ZipWriter::new(file);
+
+        let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+        let files: Vec<_> = fs::read_dir(&issue_path).expect("error creating cbz")
+            .filter_map(|entry| entry.ok())
+            .filter_map(|entry| entry.path().to_str().map(|s| s.to_string()))
+            .collect();
+
+        for filename in files {
+            let name = Path::new(&filename).file_name().unwrap().to_str().unwrap();
+            let mut f = File::open(&filename).expect("error creating cbz");
+            zip.start_file(name, options).expect("error creating cbz");
+            io::copy(&mut f, &mut zip).expect("error creating cbz");
+        }
+        zip.finish().expect("error creating cbz");
+        fs::remove_dir_all(&issue_path).expect("couldn't clean source directory");
         return Ok(());
     }
 }
