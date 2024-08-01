@@ -9,6 +9,8 @@ use regex::Regex;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
+mod sites;
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // parsing input
     let args: Vec<String> = env::args().collect();
@@ -19,6 +21,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut input = String::new();
         io::stdin().read_line(&mut input).expect("couldn't read from terminal");
         url = input.trim().to_string();
+        let comicdwl = sites::identify_website(&url).unwrap();
+        println!("{:#?}", comicdwl);
+        let issue_list = comicdwl.get_issues_list(&url)?;
+        for issue in issue_list {
+            comicdwl.download_issue(&issue)?;
+        }
+        return Ok(());
     } else {
         url = args[1].clone();
     }
@@ -70,7 +79,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let linkhtml = link.inner_html().clone();
 
                 let handle = thread::spawn(move  || {
-                    //let _ = download_issue(&client, &comic_name, link.value().attr("href").unwrap(), linkhtml );
                     let _ = download_issue(&client_clone, &comic_name_clone, &link_clone, linkhtml);
 
                 });
@@ -149,8 +157,7 @@ fn create_cbz(path: &str, output_filename: &str, comic_name: &str) -> Result<(),
     let file = File::create(&out_path)?;
     let mut zip = ZipWriter::new(file);
 
-    //let options= FileOptions::default().compression_method(zip::CompressionMethod::Stored);
-    let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+    let options = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
     let files: Vec<_> = fs::read_dir(path)?
         .filter_map(|entry| entry.ok())
         .filter_map(|entry| entry.path().to_str().map(|s| s.to_string()))

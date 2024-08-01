@@ -1,6 +1,10 @@
 all: 
 	cargo b --release
 test: all
+	rm -r test
 	mkdir -p test
-	rm -r test/*
 	cp ./target/release/comic-dl.exe ./test
+
+clean:
+	rm -r test
+	cargo clean
