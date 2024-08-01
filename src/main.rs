@@ -25,6 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{:#?}", comicdwl);
         let issue_list = comicdwl.get_issues_list(&url)?;
         for issue in issue_list {
+            println!("{:#?}", issue);
             comicdwl.download_issue(&issue)?;
         }
         return Ok(());
