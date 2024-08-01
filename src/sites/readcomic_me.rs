@@ -7,7 +7,7 @@ use std::{fs::{self, File}, io, path::{Path, PathBuf}};
 
 use super::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ReadcomicMe {
     base_url: String,
     comic_url: String,
@@ -24,7 +24,9 @@ impl ReadcomicMe {
         let client = Client::new();
         let comic_url = comic_path.replace(&base_url, "");
         let download_path = Path::new(&comic_url.replace("/comic/", "")).to_owned();
-        fs::create_dir(&download_path).unwrap();
+        if !download_path.exists() {
+            fs::create_dir(&download_path).unwrap();
+        }
         let comic_name = comic_path.replace("https://readcomic.me/comic/", "");
         Self { base_url, comic_url, client, download_path, comic_name }
     }
@@ -37,7 +39,9 @@ impl SiteDownloaderFunctions for ReadcomicMe{
         let issue_number = &issue_name.name;
         println!("Downloading {} issue number {}", self.comic_url, issue_number);
         let issue_path = self.download_path.join(issue_number);
-        if Path::new(&issue_path).exists() {
+        let out_filename = format!("{}-{}.cbz", self.comic_name, issue_name.name);
+        let out_path = self.download_path.join(&out_filename);
+        if Path::new(&out_path).exists() {
             println!("Was already downloaded");
             return Ok(());
         }

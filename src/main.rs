@@ -27,15 +27,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let jobs_quantity: usize = jobs_argument.replace("-J", "").parse()?;
             println!("starting download with {jobs_quantity} threads" );
             let mut handles: VecDeque<thread::JoinHandle<()>> = VecDeque::new();
-            for _issue in issue_list {
+            for issue in issue_list {
                 if handles.len() == jobs_quantity {
                     if let Some(handle) = handles.pop_front() {
                         handle.join().unwrap();
                     }
                 }
+                let copied_url = url.to_string().clone();
                 let handle = thread::spawn(move  || {
-                    //comicdwl.download_issue(&issue).expect("error downloading");
-                    todo!();
+                    let comicdwl = sites::identify_website(&copied_url).unwrap();
+                    comicdwl.download_issue(&issue).unwrap();
                 });
 
                 handles.push_back(handle);
