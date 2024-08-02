@@ -32,7 +32,6 @@ impl ReadcomicMe {
     }
 }
 
-#[allow(unused_variables)]
 impl SiteDownloaderFunctions for ReadcomicMe{
     fn download_issue(&self, issue_name: &Issue) -> Result<(), SiteDownloaderError> {
         let issue_link = &issue_name.link;

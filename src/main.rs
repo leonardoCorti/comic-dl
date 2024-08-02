@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         url = args[1].clone();
     }
 
-    let comicdwl = sites::identify_website(&url).unwrap();
+    let comicdwl = sites::identify_website(&url).expect("couldn't identify website");
     let issue_list = comicdwl.get_issues_list(&url)?;
 
     let args: Vec<_> =  std::env::args().collect();
