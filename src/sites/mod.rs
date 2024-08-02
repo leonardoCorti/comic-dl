@@ -2,6 +2,7 @@ use std::{fmt::Debug, path::{Path, PathBuf}};
 
 pub mod readcomic_me;
 pub mod zerocalcare_net;
+pub mod scanita_org;
 
 #[derive(Debug)]
 pub enum SiteDownloaderError{
@@ -53,6 +54,7 @@ pub fn identify_website(url: &str) -> Result<Box<dyn SiteDownloader>, SiteDownlo
             match parsed_url.domain().unwrap() {
                 "readcomic.me" => { return Ok(Box::new(readcomic_me::ReadcomicMe::new(url)))},
                 "www.zerocalcare.net" => { return Ok(Box::new(zerocalcare_net::ZerocalcareNet::new(url)))},
+                "scanita.org" => { return Ok(Box::new(scanita_org::ScanitaOrg::new(url)))},
                 _ => {return Err(SiteDownloaderError::ParsingError)} 
             }
         }, 
