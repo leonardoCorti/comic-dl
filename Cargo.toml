@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 regex = "1.10.5"
-reqwest = {version="0.12.5", features=["blocking", "rustls-tls"]}
+reqwest = {version="0.12.5", default-features = false,  features=["blocking", "rustls-tls"]}
 scraper = "0.19.1"
 zip = "2.1.5"
-openssl-sys = {version="0.9.103", features=["vendored"]}
