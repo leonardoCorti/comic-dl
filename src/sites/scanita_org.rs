@@ -90,11 +90,10 @@ impl SiteDownloaderFunctions for ScanitaOrg {
                     let issue_link = self.base_url.clone() + href;
                     let chapter_text= a_chapter.select(&h5_selector)
                         .next().unwrap().text().collect::<Vec<_>>().concat();
-                    let re= Regex::new(r"Capitolo (\d+)").unwrap();
-                    let chapter_number: usize = re.captures(&chapter_text).unwrap().get(1).unwrap().as_str().parse().unwrap();
-                    let chapter_name = format!("{:03}", chapter_number);
+                    let re= Regex::new(r"Capitol?o (.*)").unwrap();
+                    let chapter_name = re.find(&chapter_text).expect("couldn't find the chapter name").as_str();
 
-                    let issue: Issue = Issue { name: chapter_name, link: issue_link };
+                    let issue: Issue = Issue { name: chapter_name.to_owned(), link: issue_link };
                     list_of_issues.push(issue);
                 }
             },
