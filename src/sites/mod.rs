@@ -8,6 +8,7 @@ pub mod scanita_org;
 pub enum SiteDownloaderError{
     ParsingError,
     NotFound,
+    FileSystemError,
 }
 
 impl std::fmt::Display for SiteDownloaderError {
@@ -44,11 +45,12 @@ pub trait SiteDownloaderFunctions {
     fn download_page(&self, link: &str, issue_path: &Path, page_number: u32) -> Result<(), SiteDownloaderError>;
     fn get_issues_list(&self, link: &str) -> Result<Vec<Issue>, SiteDownloaderError>;
     fn create_cbz(&self, issue_name: &Issue, issue_path: PathBuf) -> Result<(), SiteDownloaderError>;
+    fn change_path(&mut self, new_path: &str) -> Result<(), SiteDownloaderError>;
 }
 
 pub trait SiteDownloader: Debug + SiteDownloaderFunctions {}
 
-pub fn identify_website(url: &str) -> Result<Box<dyn SiteDownloader>, SiteDownloaderError> {
+pub fn new_downloader(url: &str) -> Result<Box<dyn SiteDownloader>, SiteDownloaderError> {
     match reqwest::Url::parse(url){
         Ok(parsed_url) => {
             match parsed_url.domain().unwrap() {

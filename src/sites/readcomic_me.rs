@@ -24,9 +24,6 @@ impl ReadcomicMe {
         let client = Client::new();
         let comic_url = comic_path.replace(&base_url, "");
         let download_path = Path::new(&comic_url.replace("/comic/", "")).to_owned();
-        if !download_path.exists() {
-            fs::create_dir(&download_path).unwrap();
-        }
         let comic_name = comic_path.replace("https://readcomic.me/comic/", "");
         Self { base_url, comic_url, client, download_path, comic_name }
     }
@@ -34,6 +31,9 @@ impl ReadcomicMe {
 
 impl SiteDownloaderFunctions for ReadcomicMe{
     fn download_issue(&self, issue_name: &Issue) -> Result<(), SiteDownloaderError> {
+        if !self.download_path.exists() {
+            fs::create_dir(&self.download_path).unwrap();
+        }
         let issue_link = &issue_name.link;
         let issue_number = &issue_name.name;
         println!("Downloading {} issue number {}", self.comic_url, issue_number);
@@ -126,6 +126,16 @@ impl SiteDownloaderFunctions for ReadcomicMe{
         }
         zip.finish().expect("error creating cbz");
         fs::remove_dir_all(&issue_path).expect("couldn't clean source directory");
+        return Ok(());
+    }
+    fn change_path(&mut self, new_path: &str) -> Result<(), SiteDownloaderError> {
+        let new_path = Path::new(new_path);
+        if !new_path.exists(){
+            println!("The directory doesn't exists");
+            return Err(SiteDownloaderError::FileSystemError);
+        }
+        let final_path = new_path.join(self.download_path.clone());
+        self.download_path = final_path;
         return Ok(());
     }
 }

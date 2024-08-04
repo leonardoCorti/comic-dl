@@ -22,9 +22,6 @@ impl ScanitaOrg {
         let client = Client::new();
         let comic_url = comic_path.replace(&base_url, "");
         let download_path: PathBuf = Path::new(&comic_url.replace("/manga/", "").as_str()).into();
-        if !download_path.exists() {
-            fs::create_dir(&download_path).unwrap();
-        }
         let comic_name = comic_path.replace("https://scanita.org/manga/", "").into();
         Self { base_url, comic_url, client, download_path, comic_name }
     }
@@ -35,6 +32,9 @@ impl SiteDownloader for ScanitaOrg {}
 #[allow(unused_variables)]
 impl SiteDownloaderFunctions for ScanitaOrg {
     fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError> {
+        if !self.download_path.exists() {
+            fs::create_dir(&self.download_path).unwrap();
+        }
         println!("downloading {}", issue.name);
         let issue_path = self.download_path.join(issue.name.clone());
         if !issue_path.exists(){
@@ -123,6 +123,17 @@ impl SiteDownloaderFunctions for ScanitaOrg {
         }
         zip.finish().expect("error creating cbz");
         fs::remove_dir_all(&issue_path).expect("couldn't clean source directory");
+        return Ok(());
+    }
+
+    fn change_path(&mut self, new_path: &str) -> Result<(), SiteDownloaderError> {
+        let new_path = Path::new(new_path);
+        if !new_path.exists(){
+            println!("The directory doesn't exists");
+            return Err(SiteDownloaderError::FileSystemError);
+        }
+        let final_path = new_path.join(self.download_path.clone());
+        self.download_path = final_path;
         return Ok(());
     }
 }

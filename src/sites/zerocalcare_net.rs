@@ -23,9 +23,6 @@ impl ZerocalcareNet {
         let client = Client::new();
         let comic_url = comic_path.replace(&base_url, "");
         let download_path = Path::new(&comic_url.replace("/storie-a-fumetti/", "").strip_suffix("/").unwrap()).to_owned();
-        if !download_path.exists() {
-            fs::create_dir(&download_path).unwrap();
-        }
         let comic_name = comic_path.replace("https://www.zerocalcare.net/storie-a-fumetti/", "").strip_suffix("/").expect("couldn't find comic name").into();
         Self { base_url, comic_url, client, download_path, comic_name }
     }
@@ -33,6 +30,9 @@ impl ZerocalcareNet {
 
 impl SiteDownloaderFunctions for ZerocalcareNet {
     fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError> {
+        if !self.download_path.exists() {
+            fs::create_dir(&self.download_path).unwrap();
+        }
         let issue_link = &issue.link;
         let issue_name = &issue.name;
         println!("Downloading {}", self.comic_url);
@@ -107,6 +107,16 @@ impl SiteDownloaderFunctions for ZerocalcareNet {
         }
         zip.finish().expect("error creating cbz");
         fs::remove_dir_all(&issue_path).expect("couldn't clean source directory");
+        return Ok(());
+    }
+    fn change_path(&mut self, new_path: &str) -> Result<(), SiteDownloaderError> {
+        let new_path = Path::new(new_path);
+        if !new_path.exists(){
+            println!("The directory doesn't exists");
+            return Err(SiteDownloaderError::FileSystemError);
+        }
+        let final_path = new_path.join(self.download_path.clone());
+        self.download_path = final_path;
         return Ok(());
     }
 }

@@ -8,12 +8,13 @@ SSL_CERT_FILE=/mnt/onboard/.adds/koreader/data/ca.bunlde.crt ./comic-dl-armv7-li
 ```
 it can be executed to downloade new issues and it will detect the already downloaded and avoid downloading them again.
 # usage
-`comic-dl LINK_TO_COMIC [-J\<number of threads\>]`
-
-the first argument must be the link to the comic
+`comic-dl [-J<number of threads>] [-p <download path>] [link to the comic]`
 
 it supports parallelization with the argument -J\<number of threads\>.
+
+with the -p flag a custom download path can be used, a subdirectory with the name of the comic will still be created so the same download path can be used with different comics and it will still be organized
 
 # websites supported
 - zerocalcare.net
 - readcomic.me
+- scanita.org

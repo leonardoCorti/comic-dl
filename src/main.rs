@@ -21,7 +21,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         url = input.trim().to_string();
     }
 
-    let comicdwl = sites::identify_website(&url)?;
+    let mut custom_path: Option<String> = Option::None;
+    if let Some(p_flag_position) = args.iter().position(|e| e == "-p"){
+        if let Some(new_path) = args.iter().nth(p_flag_position +1){
+            custom_path = Some(new_path.to_string());
+        } else {
+            println!("no path detected after -p flag");
+            return Ok(());
+        }
+    }
+
+    let mut comicdwl = sites::new_downloader(&url)?;
+    if let Some(ref new_path) = custom_path {
+        comicdwl.change_path(&new_path)?;
+    }
     let issue_list = comicdwl.get_issues_list(&url)?;
 
     let number_of_jobs = args.iter().filter(|e| e.starts_with("-J")).next();
@@ -37,8 +50,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
                 let copied_url = url.to_string().clone();
+                let copied_custom_path = custom_path.clone();
                 let handle = thread::spawn(move  || {
-                    let comicdwl = sites::identify_website(&copied_url).unwrap();
+                    let mut comicdwl = sites::new_downloader(&copied_url).unwrap();
+                    
+                    if let Some(ref new_path) = copied_custom_path {
+                        comicdwl.change_path(&new_path).unwrap();
+                    }
                     comicdwl.download_issue(&issue).unwrap();
                 });
 
@@ -66,11 +84,12 @@ fn is_link(e: &String) -> bool {
 
 fn print_help() {
     println!(
-r#"Usage: comic-dl [-J<number of threads>] [link to the comic]
+r#"Usage: comic-dl [-J<number of threads>] [-p <download path>] [link to the comic]
 Download a comic in the current directory.
 will create a directory named after the comic and each chapter will have
 a cbz file named <comic name-chapter name>.cbz
 
 options:
-   -J<number of threads>    multithreading, one chapter per thread"#);
+   -J<number of threads>    multithreading, one chapter per thread
+   -p <download path>       custom download path"#);
 }
