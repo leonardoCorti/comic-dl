@@ -18,4 +18,5 @@ release_linux:
 
 clean:
 	rm -r test
+	rm -r release
 	cargo clean

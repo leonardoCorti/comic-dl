@@ -2,7 +2,6 @@
 
 use std::{fs::{self, File}, path::PathBuf};
 
-use regex::Regex;
 use reqwest::blocking::Client;
 use scraper::{selectable::Selectable, Html, Selector};
 
@@ -90,18 +89,18 @@ impl SiteDownloaderFunctions for ScanitaOrg {
                     let issue_link = self.base_url.clone() + href;
                     let chapter_text= a_chapter.select(&h5_selector)
                         .next().unwrap().text().collect::<Vec<_>>().concat();
-                    let re= Regex::new(r"Capitol?o (.*)").unwrap();
-                    let chapter_name = re.find(&chapter_text).expect("couldn't find the chapter name").as_str();
+                    let chapter_name = chapter_text.lines().nth(1).unwrap().trim();
+                    println!("downloading {chapter_name}");
 
                     let issue: Issue = Issue { name: chapter_name.to_owned(), link: issue_link };
                     list_of_issues.push(issue);
                 }
             },
             None => { //few chapters, no dedicated button
-                println!("not found");
                 todo!()
             },
         }
+        list_of_issues.reverse();
         return Ok(list_of_issues);
     }
 
