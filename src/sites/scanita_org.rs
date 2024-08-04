@@ -35,6 +35,7 @@ impl SiteDownloader for ScanitaOrg {}
 #[allow(unused_variables)]
 impl SiteDownloaderFunctions for ScanitaOrg {
     fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError> {
+        println!("downloading {}", issue.name);
         let issue_path = self.download_path.join(issue.name.clone());
         if !issue_path.exists(){
             fs::create_dir(&issue_path).unwrap();
@@ -90,8 +91,6 @@ impl SiteDownloaderFunctions for ScanitaOrg {
                     let chapter_text= a_chapter.select(&h5_selector)
                         .next().unwrap().text().collect::<Vec<_>>().concat();
                     let chapter_name = chapter_text.lines().nth(1).unwrap().trim();
-                    println!("downloading {chapter_name}");
-
                     let issue: Issue = Issue { name: chapter_name.to_owned(), link: issue_link };
                     list_of_issues.push(issue);
                 }
