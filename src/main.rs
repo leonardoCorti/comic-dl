@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::error::Error;
 use std::fs::File;
 use std::sync::Arc;
 use std::{env, fs, thread};
@@ -6,51 +7,35 @@ use std::io::{self, Write};
 
 mod sites;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
+
     let args: Vec<String> = env::args().collect();
+    // --help check
     if args.iter().filter(|e| *e=="-h" || *e=="--help").count() != 0 {
         print_help();
         return Ok(());
     }
+    // url check
     let url: String;
     if let Some(link) = args.iter().filter(|e| is_link(e)).next() {
         url = link.to_string();
     } else {
+        println!("insert link to comic: ");
+        url = read_from_terminal().trim().to_string();
         println!("select function:\n 1)download\n 2)create kobo install\n");
-        io::stdout().flush().unwrap();
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("couldn't read from terminal");
-        let function = input.trim().to_string();
-        match function.as_str() {
+        match read_from_terminal().trim().to_string().as_str() {
             "1" => { /*continue*/}
             "2" =>{
-                println!("insert link to comic: ");
-                io::stdout().flush().unwrap();
-                let mut input = String::new();
-                io::stdin().read_line(&mut input).expect("couldn't read from terminal");
-                url = input.trim().to_string();
-                println!("insert path of the e-reader: ");
-                io::stdout().flush().unwrap();
-                let mut input = String::new();
-                io::stdin().read_line(&mut input).expect("couldn't read from terminal");
-                let installation_path = input.trim().to_string();
-                generate_install(&installation_path, url)?;
-                println!("copy the file in the install directory to {installation_path}");
+                interactive_kobo_installation(url)?;
                 return Ok(());
             }
             _ => {
                 println!("invalid option");
                 return Ok(());
             }
-
         }
-        println!("insert link to comic: ");
-        io::stdout().flush().unwrap();
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("couldn't read from terminal");
-        url = input.trim().to_string();
     }
-
+    // --kobo-install check
     if let Some(install_flag) = args.iter().position(|e| e == "--kobo-install"){
         if let Some(install_position) = args.iter().nth(install_flag +1){
             generate_install(install_position, url)?;
@@ -61,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Ok(());
         }
     }
-
+    // -p check
     let mut custom_path: Option<String> = Option::None;
     if let Some(p_flag_position) = args.iter().position(|e| e == "-p"){
         if let Some(new_path) = args.iter().nth(p_flag_position +1){
@@ -71,50 +56,69 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Ok(());
         }
     }
+    // -J check
+    let number_of_jobs = args.iter().filter(|e| e.starts_with("-J")).next();
 
+    //start program
     let mut comicdwl = sites::new_downloader(&url)?;
+    let issue_list = comicdwl.get_issues_list(&url)?;
+
     if let Some(ref new_path) = custom_path {
         comicdwl.change_path(&new_path)?;
     }
-    let issue_list = comicdwl.get_issues_list(&url)?;
 
-    let number_of_jobs = args.iter().filter(|e| e.starts_with("-J")).next();
     match number_of_jobs{
         Some(jobs_argument) => {
-            let jobs_quantity: usize = jobs_argument.replace("-J", "").parse()?;
-            println!("starting download with {jobs_quantity} threads" );
-            let comicdwl_arc = Arc::new(comicdwl);
-            let mut handles: VecDeque<thread::JoinHandle<()>> = VecDeque::new();
-            for issue in issue_list {
-                if handles.len() == jobs_quantity {
-                    if let Some(handle) = handles.pop_front() {
-                        handle.join().unwrap();
-                    }
-                }
-                let my_comicdwl = comicdwl_arc.clone();
-                let handle = thread::spawn(move  || {
-                    my_comicdwl.download_issue(&issue).unwrap();
-                });
-
-                handles.push_back(handle);
-            }
-
-            for handle in handles{
-                handle.join().unwrap();
-            }
-
+            multithread_download(jobs_argument, comicdwl, issue_list)?;
         },
         None => {
-            for issue in issue_list {
-                comicdwl.download_issue(&issue)?;
-            }
+            issue_list.iter().for_each(|e| comicdwl.download_issue(&e).unwrap());
         },
     }
 
     return Ok(());
 }
 
-fn generate_install(install_position: &str, url: String) -> Result<(), Box<dyn std::error::Error>>{
+fn interactive_kobo_installation(url: String) -> Result<(), Box<dyn Error>> {
+    println!("insert path of the e-reader: ");
+    let installation_path = read_from_terminal().trim().to_string();
+    generate_install(&installation_path, url)?;
+    println!("copy the file in the install directory to {installation_path}");
+    return Ok(());
+}
+
+fn multithread_download(
+    jobs_argument: &String,
+    comicdwl: Box<dyn sites::SiteDownloader>,
+    issue_list: Vec<sites::Issue>
+) -> Result<(), Box<dyn Error>> {
+    let jobs_quantity: usize = jobs_argument.replace("-J", "").parse()?;
+    println!("starting download with {jobs_quantity} threads" );
+    let comicdwl_arc = Arc::new(comicdwl);
+    let mut handles: VecDeque<thread::JoinHandle<()>> = VecDeque::new();
+    for issue in issue_list {
+        if handles.len() == jobs_quantity {
+            handles.pop_front().unwrap().join().unwrap();
+        }
+        let comicdwl_thread = comicdwl_arc.clone();
+        let handle = thread::spawn(move  || {
+            comicdwl_thread.download_issue(&issue).unwrap();
+        });
+        handles.push_back(handle);
+    }
+    Ok(for handle in handles{
+        handle.join().unwrap();
+    })
+}
+
+fn read_from_terminal() -> String {
+    io::stdout().flush().unwrap();
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).expect("couldn't read from terminal");
+    return input;
+}
+
+fn generate_install(install_position: &str, url: String) -> Result<(), Box<dyn Error>>{
     let installation_path = std::path::Path::new("install");
     if !installation_path.exists(){
         fs::create_dir(installation_path)?;
