@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::fs::File;
+use std::sync::Arc;
 use std::{env, fs, thread};
 use std::io::{self, Write};
 
@@ -54,6 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(jobs_argument) => {
             let jobs_quantity: usize = jobs_argument.replace("-J", "").parse()?;
             println!("starting download with {jobs_quantity} threads" );
+            let comicdwl_arc = Arc::new(comicdwl);
             let mut handles: VecDeque<thread::JoinHandle<()>> = VecDeque::new();
             for issue in issue_list {
                 if handles.len() == jobs_quantity {
@@ -61,15 +63,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         handle.join().unwrap();
                     }
                 }
-                let copied_url = url.to_string().clone();
-                let copied_custom_path = custom_path.clone();
+                let my_comicdwl = comicdwl_arc.clone();
                 let handle = thread::spawn(move  || {
-                    let mut comicdwl = sites::new_downloader(&copied_url).unwrap();
-                    
-                    if let Some(ref new_path) = copied_custom_path {
-                        comicdwl.change_path(&new_path).unwrap();
-                    }
-                    comicdwl.download_issue(&issue).unwrap();
+                    my_comicdwl.download_issue(&issue).unwrap();
                 });
 
                 handles.push_back(handle);

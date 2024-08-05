@@ -49,7 +49,7 @@ pub trait SiteDownloaderFunctions {
     fn get_comic_name(&self) -> &str;
 }
 
-pub trait SiteDownloader: Debug + SiteDownloaderFunctions {}
+pub trait SiteDownloader: Send + Sync + Debug + SiteDownloaderFunctions {}
 
 pub fn new_downloader(url: &str) -> Result<Box<dyn SiteDownloader>, SiteDownloaderError> {
     match reqwest::Url::parse(url){
