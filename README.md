@@ -1,7 +1,7 @@
 # comic-dl
 this is a command line program to download comics online in cbz format to read them on e-readers
 
-it can be also used directly on the kobo readers with KOreader installed with the enviroment variable `SSL_CERT_FILE=/mnt/onboard/.adds/koreader/data/ca.bunlde.crt`, for ease of use I reccomend writing a script like this
+it can be also used directly on the kobo readers with KOreader installed, for ease of use I reccomend writing a script like this
 ``` bash
 #!/bin/sh
 cd /mnt/onboard/<directory with the program
