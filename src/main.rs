@@ -135,6 +135,19 @@ cd /mnt/onboard/{install_position}
     let progam = reqwest::blocking::Client::new().get(kobo_version_link).send()?.bytes()?;
     program_file.write_all(&progam)?;
 
+    let list_of_file: Vec<String> = installation_path.read_dir().unwrap().into_iter()
+        .map(|e| e.unwrap().path()
+            .file_name().unwrap()
+            .to_str().unwrap()
+            .to_string())
+        .filter(|e| e.ends_with("sh"))
+        .collect();
+
+    if list_of_file.len() > 1 {
+        let scripts: String = list_of_file.iter().fold("#!/bin/sh \n".to_string(), |a,b| a + "./" + b + "\n");
+        let mut download_all = File::create(installation_path.join("download_all.sh"))?;
+        download_all.write_all(scripts.as_bytes())?;
+    }
     return Ok(());
 }
 
