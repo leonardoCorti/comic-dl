@@ -46,6 +46,7 @@ pub trait SiteDownloaderFunctions {
     fn get_issues_list(&self, link: &str) -> Result<Vec<Issue>, SiteDownloaderError>;
     fn create_cbz(&self, issue_name: &Issue, issue_path: PathBuf) -> Result<(), SiteDownloaderError>;
     fn change_path(&mut self, new_path: &str) -> Result<(), SiteDownloaderError>;
+    fn get_comic_name(&self) -> &str;
 }
 
 pub trait SiteDownloader: Debug + SiteDownloaderFunctions {}

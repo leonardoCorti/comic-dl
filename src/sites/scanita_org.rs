@@ -136,5 +136,8 @@ impl SiteDownloaderFunctions for ScanitaOrg {
         self.download_path = final_path;
         return Ok(());
     }
+    fn get_comic_name(&self) -> &str {
+        return &self.comic_name;
+    }
 }
 

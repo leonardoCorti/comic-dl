@@ -25,6 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(install_flag) = args.iter().position(|e| e == "--kobo-install"){
         if let Some(install_position) = args.iter().nth(install_flag +1){
             generate_install(install_position, url)?;
+            println!("copy the file in the install directory to {install_position}");
             return Ok(());
         } else {
             println!("no path detected after --kobo-install flag");
@@ -100,8 +101,10 @@ r#"#!/bin/sh
 cd /mnt/onboard/{install_position}
 ./comic-dl-armv7-linux {url}"#); 
     let script = script.replace("\\", "/");
+    let comic_dw = sites::new_downloader(&url)?;
+    let comic_name = comic_dw.get_comic_name();
 
-    let mut script_file = File::create(installation_path.join("download.sh"))?;
+    let mut script_file = File::create(installation_path.join(format!("{comic_name}.sh")))?;
     script_file.write_all(script.as_bytes())?;
 
     let mut program_file = File::create(installation_path.join("comic-dl-armv7-linux"))?;
