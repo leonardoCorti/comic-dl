@@ -44,7 +44,9 @@ impl SiteDownloaderFunctions for ReadcomicMe{
             println!("Was already downloaded");
             return Ok(());
         }
-        fs::create_dir(&issue_path).unwrap();
+        if !issue_path.exists() {
+            fs::create_dir(&issue_path).unwrap();
+        }
 
         let page = self.client.get(issue_link).send().unwrap();
         let page_body = page.text().unwrap();
