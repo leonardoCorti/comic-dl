@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
-use std::{env, thread};
+use std::fs::File;
+use std::{env, fs, thread};
 use std::io::{self, Write};
 
 mod sites;
@@ -19,6 +20,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut input = String::new();
         io::stdin().read_line(&mut input).expect("couldn't read from terminal");
         url = input.trim().to_string();
+    }
+
+    if let Some(install_flag) = args.iter().position(|e| e == "--kobo-install"){
+        if let Some(install_position) = args.iter().nth(install_flag +1){
+            generate_install(install_position, url)?;
+            return Ok(());
+        } else {
+            println!("no path detected after --kobo-install flag");
+            return Ok(());
+        }
     }
 
     let mut custom_path: Option<String> = Option::None;
@@ -78,18 +89,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     return Ok(());
 }
 
+fn generate_install(install_position: &str, url: String) -> Result<(), Box<dyn std::error::Error>>{
+    let installation_path = std::path::Path::new("install");
+    if !installation_path.exists(){
+        fs::create_dir(installation_path)?;
+    }
+    let kobo_version_link = "https://github.com/leonardoCorti/comic-dl/releases/download/v0.3.0/comic-dl-armv7-linux";
+    let script = format!(
+r#"#!/bin/sh
+cd /mnt/onboard/{install_position}
+./comic-dl-armv7-linux {url}"#); 
+    let script = script.replace("\\", "/");
+
+    let mut script_file = File::create(installation_path.join("download.sh"))?;
+    script_file.write_all(script.as_bytes())?;
+
+    let mut program_file = File::create(installation_path.join("comic-dl-armv7-linux"))?;
+    let progam = reqwest::blocking::Client::new().get(kobo_version_link).send()?.bytes()?;
+    program_file.write_all(&progam)?;
+
+    return Ok(());
+}
+
 fn is_link(e: &String) -> bool {
     return e.starts_with("https://") || e.starts_with("http://") ;
 }
 
 fn print_help() {
     println!(
-r#"Usage: comic-dl [-J<number of threads>] [-p <download path>] [link to the comic]
+r#"Usage: comic-dl [-J<number of threads>] [-p <download path>] [--kobo-install <path>] [link to the comic]
 Download a comic in the current directory.
 will create a directory named after the comic and each chapter will have
 a cbz file named <comic name-chapter name>.cbz
+The path for the --kobo-install option should be the path where you want to download the comic on the kobo, exclude the drive letter on windows, for example G:\comics\spiderman should just be --kobo-install comics\spiderman
 
 options:
    -J<number of threads>    multithreading, one chapter per thread
-   -p <download path>       custom download path"#);
+   -p <download path>       custom download path
+   --kobo-install <path>    setup the script to use on kobo"#);
 }
