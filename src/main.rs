@@ -16,6 +16,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(link) = args.iter().filter(|e| is_link(e)).next() {
         url = link.to_string();
     } else {
+        println!("select function:\n 1)download\n 2)create kobo install\n");
+        io::stdout().flush().unwrap();
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).expect("couldn't read from terminal");
+        let function = input.trim().to_string();
+        match function.as_str() {
+            "1" => { /*continue*/}
+            "2" =>{
+                println!("insert link to comic: ");
+                io::stdout().flush().unwrap();
+                let mut input = String::new();
+                io::stdin().read_line(&mut input).expect("couldn't read from terminal");
+                url = input.trim().to_string();
+                println!("insert path of the e-reader: ");
+                io::stdout().flush().unwrap();
+                let mut input = String::new();
+                io::stdin().read_line(&mut input).expect("couldn't read from terminal");
+                let installation_path = input.trim().to_string();
+                generate_install(&installation_path, url)?;
+                println!("copy the file in the install directory to {installation_path}");
+                return Ok(());
+            }
+            _ => {
+                println!("invalid option");
+                return Ok(());
+            }
+
+        }
         println!("insert link to comic: ");
         io::stdout().flush().unwrap();
         let mut input = String::new();

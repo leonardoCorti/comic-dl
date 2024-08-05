@@ -11,7 +11,7 @@ it can be also used directly on the kobo readers with KOreader installed, for ea
 cd /mnt/onboard/<directory with the program>
 ./comic-dl-armv7-linux <LINK_TO_COMIC>
 ```
-it can also be generated with the --kobo-install option. The path after the flag should be the path where you want to download the comic on the kobo, exclude the drive letter on windows, for example G:\comics\spiderman should just be --kobo-install comics\spiderman. After this you will need to copy the files in the "installation" directory in the directory writte in the command
+it can also be generated with the --kobo-install option. The path after the flag should be the path where you want to download the comic on the kobo, exclude the drive letter on windows, for example G:\comics\spiderman should just be --kobo-install comics\spiderman. After this you will need to copy the files generated in the "installation" directory to the kobo directory
 # usage
 `comic-dl [-J<number of threads>] [-p <download path>] [--kobo-install <path>] [link to the comic]`
 
