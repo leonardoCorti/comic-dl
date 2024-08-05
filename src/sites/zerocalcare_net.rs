@@ -31,7 +31,11 @@ impl ZerocalcareNet {
 impl SiteDownloaderFunctions for ZerocalcareNet {
     fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError> {
         if !self.download_path.exists() {
-            fs::create_dir(&self.download_path).unwrap();
+            if fs::create_dir(&self.download_path).is_err() {
+                if !self.download_path.exists(){
+                    return Err(SiteDownloaderError::FileSystemError);
+                }
+            };
         }
         let issue_link = &issue.link;
         let issue_name = &issue.name;

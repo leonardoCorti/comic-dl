@@ -32,7 +32,11 @@ impl ReadcomicMe {
 impl SiteDownloaderFunctions for ReadcomicMe{
     fn download_issue(&self, issue_name: &Issue) -> Result<(), SiteDownloaderError> {
         if !self.download_path.exists() {
-            fs::create_dir(&self.download_path).unwrap();
+            if fs::create_dir(&self.download_path).is_err() {
+                if !self.download_path.exists(){
+                    return Err(SiteDownloaderError::FileSystemError);
+                }
+            };
         }
         let issue_link = &issue_name.link;
         let issue_number = &issue_name.name;

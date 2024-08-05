@@ -33,7 +33,11 @@ impl SiteDownloader for ScanitaOrg {}
 impl SiteDownloaderFunctions for ScanitaOrg {
     fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError> {
         if !self.download_path.exists() {
-            fs::create_dir(&self.download_path).unwrap();
+            if fs::create_dir(&self.download_path).is_err() {
+                if !self.download_path.exists(){
+                    return Err(SiteDownloaderError::FileSystemError);
+                }
+            };
         }
         println!("downloading {}", issue.name);
         let issue_path = self.download_path.join(issue.name.clone());
