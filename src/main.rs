@@ -128,10 +128,6 @@ cd "$(dirname "$0")"
     let mut script_file = File::create(installation_path.join(format!("{comic_name}.sh")))?;
     script_file.write_all(script.as_bytes())?;
 
-    let mut program_file = File::create(installation_path.join("comic-dl-armv7-linux"))?;
-    let progam = reqwest::blocking::Client::new().get(kobo_version_link).send()?.bytes()?;
-    program_file.write_all(&progam)?;
-
     let list_of_file: Vec<String> = installation_path.read_dir().unwrap().into_iter()
         .map(|e| e.unwrap().path()
             .file_name().unwrap()
@@ -145,7 +141,27 @@ cd "$(dirname "$0")"
         let mut download_all = File::create(installation_path.join("download_all.sh"))?;
         download_all.write_all(scripts.as_bytes())?;
     }
+
+     match reqwest::blocking::Client::new().get(kobo_version_link).send(){
+        Ok(program_download) => {
+            let progam = program_download.bytes()?;
+            if is_elf(&progam[..4].try_into()?) {
+                let mut program_file = File::create(installation_path.join("comic-dl-armv7-linux"))?;
+                program_file.write_all(&progam)?;
+            } else {
+                println!("couldn't download the kobo version of comic-dl, donwload it manually");
+            }
+        }
+        Err(_) => {
+            println!("couldn't download the kobo version of comic-dl, donwload it manually");
+        } ,
+    };
     return Ok(());
+}
+
+fn is_elf(first_byes: &[u8;4]) -> bool {
+    let magic_number = [0x7F, b'E', b'L', b'F'];
+    return *first_byes == magic_number;
 }
 
 fn is_link(e: &String) -> bool {
