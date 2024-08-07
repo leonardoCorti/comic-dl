@@ -142,7 +142,11 @@ cd "$(dirname "$0")"
         download_all.write_all(scripts.as_bytes())?;
     }
 
-     match reqwest::blocking::Client::new().get(kobo_version_link).send(){
+    let update_script = include_str!("./assets/update.sh");
+    let mut update_script_file = File::create(installation_path.join("update.sh"))?;
+    update_script_file.write_all(update_script.as_bytes())?;
+
+    match reqwest::blocking::Client::new().get(kobo_version_link).send(){
         Ok(program_download) => {
             let progam = program_download.bytes()?;
             if is_elf(&progam[..4].try_into()?) {
