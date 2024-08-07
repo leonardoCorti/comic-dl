@@ -116,7 +116,7 @@ fn generate_install(url: String) -> Result<(), Box<dyn Error>>{
     if !installation_path.exists(){
         fs::create_dir(installation_path)?;
     }
-    let kobo_version_link = "https://github.com/leonardoCorti/comic-dl/releases/download/v0.3.5/comic-dl-armv7-linux";
+    let kobo_version_link = "https://github.com/leonardoCorti/comic-dl/releases/download/v0.4.0/comic-dl-armv7-linux";
     let script = format!(
 r#"#!/bin/sh
 cd "$(dirname "$0")"
