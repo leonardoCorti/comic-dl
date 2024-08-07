@@ -27,6 +27,23 @@ impl ReadcomicMe {
         let comic_name = comic_path.replace("https://readcomic.me/comic/", "");
         Self { base_url, comic_url, client, download_path, comic_name }
     }
+
+    fn get_page_with_issues(&self, page_link: String) -> Option<String> {
+        let response = self.client.get(page_link).send().unwrap();
+        let body = response.text().unwrap();
+        let document = Html::parse_document(&body);
+        let selector = Selector::parse("#nt_listchapter").unwrap();
+        let list = document.select(&selector).next();
+        if list.is_none(){
+            return None;
+        }
+        let link_selector = Selector::parse("a").unwrap();
+        let links: Vec<_> = list.unwrap().select(&link_selector).collect();
+        if links.iter().filter(|e| e.inner_html().contains("Issue #")).count() ==0 {
+            return None;
+        }
+        return Some(body);
+    }
 }
 
 impl SiteDownloaderFunctions for ReadcomicMe{
@@ -91,23 +108,29 @@ impl SiteDownloaderFunctions for ReadcomicMe{
 
     fn get_issues_list(&self, link: &str) ->Result<Vec<Issue>, SiteDownloaderError> {
         let mut vec = Vec::new();
-        let response = self.client.get(link).send().unwrap();
-        let body = response.text().unwrap();
-        let document = Html::parse_document(&body);
-        let selector = Selector::parse("#nt_listchapter").unwrap();
-        let list = document.select(&selector).next();
-        if list.is_none(){
-            return Err(SiteDownloaderError::NotFound);
-        }
-        let link_selector = Selector::parse("a").unwrap();
-        let links: Vec<_> = list.unwrap().select(&link_selector).collect();
-        for link in links {
-            let link_number: String = link.inner_html()
-                .lines().nth(1).expect("couldn't find the issue number")
-                .replace("Issue #","");
-            let issue_url: String = link.value().attr("href").unwrap().to_owned();
-            let issue: Issue = Issue { name: link_number, link: issue_url };
-            vec.push(issue);
+        let mut page_number = 0;
+        let mut page_link = link.to_string() + "?page="+&page_number.to_string();
+        while let Some(page_with_link) = self.get_page_with_issues(page_link) {
+            let document = Html::parse_document(&page_with_link);
+            let selector = Selector::parse("#nt_listchapter").unwrap();
+            let list = document.select(&selector).next();
+            if list.is_none(){
+                return Err(SiteDownloaderError::NotFound);
+            }
+            let link_selector = Selector::parse("a").unwrap();
+            let links: Vec<_> = list.unwrap().select(&link_selector).collect();
+            for link in links {
+                let link_number: String = match link.inner_html()
+                    .lines().nth(1){
+                    Some(inner_line) => inner_line.replace("Issue #", "") ,
+                    None => break,
+                };
+                let issue_url: String = link.value().attr("href").unwrap().to_owned();
+                let issue: Issue = Issue { name: link_number, link: issue_url };
+                vec.push(issue);
+            }
+            page_number += 1;
+            page_link = link.to_string() + "?page="+&page_number.to_string();
         }
         return Ok(vec);
     }
