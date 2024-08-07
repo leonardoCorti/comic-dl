@@ -36,15 +36,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
     // --kobo-install check
-    if let Some(install_flag) = args.iter().position(|e| e == "--kobo-install"){
-        if let Some(install_position) = args.iter().nth(install_flag +1){
-            generate_install(install_position, url)?;
-            println!("copy the file in the install directory to {install_position}");
-            return Ok(());
-        } else {
-            println!("no path detected after --kobo-install flag");
-            return Ok(());
-        }
+    if let Some(_install_flag) = args.iter().position(|e| e == "--kobo-install"){
+        generate_install(url)?;
+        println!("copy the file in the install directory to the kobo");
+        return Ok(());
     }
     // -p check
     let mut custom_path: Option<String> = Option::None;
@@ -80,10 +75,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn interactive_kobo_installation(url: String) -> Result<(), Box<dyn Error>> {
-    println!("insert path of the e-reader: ");
-    let installation_path = read_from_terminal().trim().to_string();
-    generate_install(&installation_path, url)?;
-    println!("copy the file in the install directory to {installation_path}");
+    generate_install(url)?;
+    println!("copy the file in the install directory to the kobo");
     return Ok(());
 }
 
@@ -118,7 +111,7 @@ fn read_from_terminal() -> String {
     return input;
 }
 
-fn generate_install(install_position: &str, url: String) -> Result<(), Box<dyn Error>>{
+fn generate_install(url: String) -> Result<(), Box<dyn Error>>{
     let installation_path = std::path::Path::new("install");
     if !installation_path.exists(){
         fs::create_dir(installation_path)?;
@@ -126,7 +119,7 @@ fn generate_install(install_position: &str, url: String) -> Result<(), Box<dyn E
     let kobo_version_link = "https://github.com/leonardoCorti/comic-dl/releases/download/v0.3.5/comic-dl-armv7-linux";
     let script = format!(
 r#"#!/bin/sh
-cd /mnt/onboard/{install_position}
+cd "$(dirname "$0")"
 ./comic-dl-armv7-linux {url}"#); 
     let script = script.replace("\\", "/");
     let comic_dw = sites::new_downloader(&url)?;
@@ -148,7 +141,7 @@ cd /mnt/onboard/{install_position}
         .collect();
 
     if list_of_file.len() > 1 {
-        let scripts: String = list_of_file.iter().fold("#!/bin/sh \n".to_string(), |a,b| a + "./" + b + "\n");
+        let scripts: String = list_of_file.iter().fold("#!/bin/sh \ncd \"$(dirname \"$0\")\"\n".to_string(), |a,b| a + "./" + b + "\n");
         let mut download_all = File::create(installation_path.join("download_all.sh"))?;
         download_all.write_all(scripts.as_bytes())?;
     }
@@ -161,14 +154,13 @@ fn is_link(e: &String) -> bool {
 
 fn print_help() {
     println!(
-r#"Usage: comic-dl [-J<number of threads>] [-p <download path>] [--kobo-install <path>] [link to the comic]
+r#"Usage: comic-dl [-J<number of threads>] [-p <download path>] [--kobo-install] [link to the comic]
 Download a comic in the current directory.
 will create a directory named after the comic and each chapter will have
 a cbz file named <comic name-chapter name>.cbz
-The path for the --kobo-install option should be the path where you want to download the comic on the kobo, exclude the drive letter on windows, for example G:\comics\spiderman should just be --kobo-install comics\spiderman
 
 options:
    -J<number of threads>    multithreading, one chapter per thread
    -p <download path>       custom download path
-   --kobo-install <path>    setup the script to use on kobo"#);
+   --kobo-install           setup the script to use on kobo"#);
 }
