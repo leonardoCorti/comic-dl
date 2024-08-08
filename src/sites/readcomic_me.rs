@@ -108,7 +108,7 @@ impl SiteDownloaderFunctions for ReadcomicMe{
 
     fn get_issues_list(&self, link: &str) ->Result<Vec<Issue>, SiteDownloaderError> {
         let mut vec = Vec::new();
-        let mut page_number = 0;
+        let mut page_number = 1;
         let mut page_link = link.to_string() + "?page="+&page_number.to_string();
         while let Some(page_with_link) = self.get_page_with_issues(page_link) {
             let document = Html::parse_document(&page_with_link);
@@ -132,6 +132,7 @@ impl SiteDownloaderFunctions for ReadcomicMe{
             page_number += 1;
             page_link = link.to_string() + "?page="+&page_number.to_string();
         }
+        vec.reverse();
         return Ok(vec);
     }
 
