@@ -7,17 +7,8 @@ USER="leonardoCorti"
 REPO="comic-dl"
 FILE_PATTERN="comic-dl-armv7-linux"
 
-# Get the latest release download URL
-DOWNLOAD_URL=$(wget -qO- https://api.github.com/repos/$USER/$REPO/releases/latest | grep "browser_download_url.*$FILE_PATTERN" | cut -d '"' -f 4)
-
-# Check if the download URL was found
-if [[ -z "$DOWNLOAD_URL" ]]; then
-    echo "Error: Could not find the download URL for $FILE_PATTERN in the latest release."
-    exit 1
-fi
-
 # Download the file
-wget -O $FILE_PATTERN $DOWNLOAD_URL
+wget -L "https://github.com/$USER/$REPO/releases/latest/download/$FILE_PATTERN"
 
 # Verify the download was successful
 if [[ $? -eq 0 ]]; then
