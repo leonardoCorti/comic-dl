@@ -56,7 +56,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     //start program
     let mut comicdwl = sites::new_downloader(&url)?;
-    let issue_list = comicdwl.get_issues_list()?;
 
     if let Some(ref new_path) = custom_path {
         comicdwl.change_path(&new_path)?;
@@ -64,10 +63,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     match number_of_jobs{
         Some(jobs_argument) => {
-            multithread_download(jobs_argument, comicdwl, issue_list)?;
+            let jobs_quantity: usize = jobs_argument.replace("-J", "").parse()?;
+            multithread_download(jobs_quantity, comicdwl)?;
         },
         None => {
-            issue_list.iter().for_each(|e| comicdwl.download_issue(&e).unwrap());
+            comicdwl.download_all()?;
         },
     }
 
@@ -81,11 +81,10 @@ fn interactive_kobo_installation(url: String) -> Result<(), Box<dyn Error>> {
 }
 
 fn multithread_download(
-    jobs_argument: &String,
+    jobs_quantity: usize,
     comicdwl: Box<dyn sites::SiteDownloader>,
-    issue_list: Vec<sites::Issue>
 ) -> Result<(), Box<dyn Error>> {
-    let jobs_quantity: usize = jobs_argument.replace("-J", "").parse()?;
+    let issue_list = comicdwl.get_issues_list()?;
     println!("starting download with {jobs_quantity} threads" );
     let comicdwl_arc = Arc::new(comicdwl);
     let mut handles: VecDeque<thread::JoinHandle<()>> = VecDeque::new();

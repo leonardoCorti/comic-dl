@@ -45,6 +45,11 @@ pub trait SiteDownloaderFunctions {
     fn create_cbz(&self, issue_name: &Issue, issue_path: PathBuf) -> Result<(), SiteDownloaderError>;
     fn change_path(&mut self, new_path: &str) -> Result<(), SiteDownloaderError>;
     fn get_comic_name(&self) -> &str;
+    fn download_all(&self) -> Result<(), SiteDownloaderError> {
+        let issues = self.get_issues_list()?;
+        issues.iter().for_each(|e| self.download_issue(&e).unwrap());
+        return Ok(());
+    }
 }
 
 pub trait SiteDownloader: Send + Sync + Debug + SiteDownloaderFunctions {}
