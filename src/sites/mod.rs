@@ -38,7 +38,7 @@ pub struct Issue{
     link: String,
 }
 
-pub trait SiteDownloaderFunctions {
+pub trait SiteDownloader: Send + Sync + Debug {
     fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError>;
     fn download_page(&self, link: &str, issue_path: &Path, page_number: u32) -> Result<(), SiteDownloaderError>;
     fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError>;
@@ -51,8 +51,6 @@ pub trait SiteDownloaderFunctions {
         return Ok(());
     }
 }
-
-pub trait SiteDownloader: Send + Sync + Debug + SiteDownloaderFunctions {}
 
 pub fn new_downloader(url: &str) -> Result<Box<dyn SiteDownloader>, SiteDownloaderError> {
     match reqwest::Url::parse(url){

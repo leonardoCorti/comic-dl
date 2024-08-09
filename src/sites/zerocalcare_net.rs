@@ -13,8 +13,6 @@ pub struct ZerocalcareNet {
     comic_name: String,
 }
 
-impl SiteDownloader for ZerocalcareNet {}
-
 impl ZerocalcareNet {
     pub fn new(comic_path: &str) -> Self {
         let base_url = "https://www.zerocalcare.net".to_string();
@@ -26,7 +24,7 @@ impl ZerocalcareNet {
     }
 }
 
-impl SiteDownloaderFunctions for ZerocalcareNet {
+impl SiteDownloader for ZerocalcareNet {
     fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError> {
         if !self.download_path.exists() {
             if fs::create_dir(&self.download_path).is_err() {

@@ -14,8 +14,6 @@ pub struct ReadcomicMe {
     comic_name: String,
 }
 
-impl SiteDownloader for ReadcomicMe {}
-
 impl ReadcomicMe {
     pub fn new(comic_path: &str) -> Self {
         let base_url = "https://readcomic.me".to_string();
@@ -44,7 +42,7 @@ impl ReadcomicMe {
     }
 }
 
-impl SiteDownloaderFunctions for ReadcomicMe{
+impl SiteDownloader for ReadcomicMe{
     fn download_issue(&self, issue_name: &Issue) -> Result<(), SiteDownloaderError> {
         if !self.download_path.exists() {
             if fs::create_dir(&self.download_path).is_err() {

@@ -25,9 +25,7 @@ impl ScanitaOrg {
     }
 }
 
-impl SiteDownloader for ScanitaOrg {}
-
-impl SiteDownloaderFunctions for ScanitaOrg {
+impl SiteDownloader for ScanitaOrg {
     fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError> {
         if !self.download_path.exists() {
             if fs::create_dir(&self.download_path).is_err() {
