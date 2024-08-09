@@ -80,10 +80,10 @@ impl SiteDownloaderFunctions for ZerocalcareNet {
         return Ok(());
     }
 
-    fn get_issues_list(&self, link: &str) -> Result<Vec<Issue>, SiteDownloaderError> {
+    fn get_issues_list(&self, _link: &str) -> Result<Vec<Issue>, SiteDownloaderError> {
         //there is a single issue for comic
         let name = self.comic_name.clone();
-        let link = link.to_string();
+        let link = self._base_url.clone() + self.comic_url.as_str();
         let the_issue: Issue = Issue { name, link };
         let vec = vec![the_issue];
         return Ok(vec);
@@ -111,6 +111,7 @@ impl SiteDownloaderFunctions for ZerocalcareNet {
         fs::remove_dir_all(&issue_path).expect("couldn't clean source directory");
         return Ok(());
     }
+
     fn change_path(&mut self, new_path: &str) -> Result<(), SiteDownloaderError> {
         let new_path = Path::new(new_path);
         if !new_path.exists(){
@@ -121,6 +122,7 @@ impl SiteDownloaderFunctions for ZerocalcareNet {
         self.download_path = final_path;
         return Ok(());
     }
+
     fn get_comic_name(&self) -> &str {
         return &self.comic_name;
     }
