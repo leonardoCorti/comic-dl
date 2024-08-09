@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     //start program
     let mut comicdwl = sites::new_downloader(&url)?;
-    let issue_list = comicdwl.get_issues_list(&url)?;
+    let issue_list = comicdwl.get_issues_list()?;
 
     if let Some(ref new_path) = custom_path {
         comicdwl.change_path(&new_path)?;

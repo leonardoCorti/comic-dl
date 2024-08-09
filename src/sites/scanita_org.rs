@@ -8,7 +8,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct ScanitaOrg {
     base_url: String,
-    _comic_url: String,
+    comic_url: String,
     client: Client,
     download_path: PathBuf,
     comic_name: String,
@@ -21,7 +21,7 @@ impl ScanitaOrg {
         let comic_url = comic_path.replace(&base_url, "");
         let download_path: PathBuf = Path::new(&comic_url.replace("/manga/", "").as_str()).into();
         let comic_name = comic_path.replace("https://scanita.org/manga/", "").into();
-        Self { base_url, _comic_url: comic_url, client, download_path, comic_name }
+        Self { base_url, comic_url, client, download_path, comic_name }
     }
 }
 
@@ -71,8 +71,9 @@ impl SiteDownloaderFunctions for ScanitaOrg {
         return Ok(());
     }
 
-    fn get_issues_list(&self, link: &str) -> Result<Vec<Issue>, SiteDownloaderError> {
+    fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError> {
         let mut list_of_issues: Vec<Issue> = Vec::new();
+        let link = self.base_url.clone() + self.comic_url.as_str();
         let body = self.client.get(link).send().unwrap()
             .text().unwrap();
         let document = Html::parse_document(&body);

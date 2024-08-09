@@ -7,7 +7,7 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub struct ReadcomicMe {
-    _base_url: String,
+    base_url: String,
     comic_url: String,
     client: Client,
     download_path: PathBuf,
@@ -23,7 +23,7 @@ impl ReadcomicMe {
         let comic_url = comic_path.replace(&base_url, "");
         let download_path = Path::new(&comic_url.replace("/comic/", "")).to_owned();
         let comic_name = comic_path.replace("https://readcomic.me/comic/", "");
-        Self { _base_url: base_url, comic_url, client, download_path, comic_name }
+        Self { base_url, comic_url, client, download_path, comic_name }
     }
 
     fn get_page_with_issues(&self, page_link: String) -> Option<String> {
@@ -104,8 +104,9 @@ impl SiteDownloaderFunctions for ReadcomicMe{
         return Ok(());
     }
 
-    fn get_issues_list(&self, link: &str) ->Result<Vec<Issue>, SiteDownloaderError> {
+    fn get_issues_list(&self) ->Result<Vec<Issue>, SiteDownloaderError> {
         let mut vec = Vec::new();
+        let link = self.base_url.clone() + self.comic_url.as_str();
         let mut page_number = 1;
         let mut page_link = link.to_string() + "?page="+&page_number.to_string();
         while let Some(page_with_link) = self.get_page_with_issues(page_link) {

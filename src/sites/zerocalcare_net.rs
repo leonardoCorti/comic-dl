@@ -6,7 +6,7 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub struct ZerocalcareNet {
-    _base_url: String,
+    base_url: String,
     comic_url: String,
     client: Client,
     download_path: PathBuf,
@@ -22,7 +22,7 @@ impl ZerocalcareNet {
         let comic_url = comic_path.replace(&base_url, "");
         let download_path = Path::new(&comic_url.replace("/storie-a-fumetti/", "").strip_suffix("/").unwrap()).to_owned();
         let comic_name = comic_path.replace("https://www.zerocalcare.net/storie-a-fumetti/", "").strip_suffix("/").expect("couldn't find comic name").into();
-        Self { _base_url: base_url, comic_url, client, download_path, comic_name }
+        Self { base_url, comic_url, client, download_path, comic_name }
     }
 }
 
@@ -80,10 +80,10 @@ impl SiteDownloaderFunctions for ZerocalcareNet {
         return Ok(());
     }
 
-    fn get_issues_list(&self, _link: &str) -> Result<Vec<Issue>, SiteDownloaderError> {
+    fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError> {
         //there is a single issue for comic
         let name = self.comic_name.clone();
-        let link = self._base_url.clone() + self.comic_url.as_str();
+        let link = self.base_url.clone() + self.comic_url.as_str();
         let the_issue: Issue = Issue { name, link };
         let vec = vec![the_issue];
         return Ok(vec);
