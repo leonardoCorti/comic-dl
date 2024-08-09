@@ -32,14 +32,12 @@ impl std::error::Error for SiteDownloaderError {
 
 }
 
-#[allow(dead_code)]
 #[derive(Debug)]
 pub struct Issue{
     name: String,
     link: String,
 }
 
-#[allow(dead_code)]
 pub trait SiteDownloaderFunctions {
     fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError>;
     fn download_page(&self, link: &str, issue_path: &Path, page_number: u32) -> Result<(), SiteDownloaderError>;

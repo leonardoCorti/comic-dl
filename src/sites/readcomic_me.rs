@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use regex::Regex;
 use reqwest::blocking::Client;
 use scraper::{selectable::Selectable, Html, Selector};
@@ -9,7 +7,7 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub struct ReadcomicMe {
-    base_url: String,
+    _base_url: String,
     comic_url: String,
     client: Client,
     download_path: PathBuf,
@@ -25,7 +23,7 @@ impl ReadcomicMe {
         let comic_url = comic_path.replace(&base_url, "");
         let download_path = Path::new(&comic_url.replace("/comic/", "")).to_owned();
         let comic_name = comic_path.replace("https://readcomic.me/comic/", "");
-        Self { base_url, comic_url, client, download_path, comic_name }
+        Self { _base_url: base_url, comic_url, client, download_path, comic_name }
     }
 
     fn get_page_with_issues(&self, page_link: String) -> Option<String> {

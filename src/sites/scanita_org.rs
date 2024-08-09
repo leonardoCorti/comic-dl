@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::{fs::{self, File}, path::PathBuf};
 
 use reqwest::blocking::Client;
@@ -10,7 +8,7 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct ScanitaOrg {
     base_url: String,
-    comic_url: String,
+    _comic_url: String,
     client: Client,
     download_path: PathBuf,
     comic_name: String,
@@ -23,13 +21,12 @@ impl ScanitaOrg {
         let comic_url = comic_path.replace(&base_url, "");
         let download_path: PathBuf = Path::new(&comic_url.replace("/manga/", "").as_str()).into();
         let comic_name = comic_path.replace("https://scanita.org/manga/", "").into();
-        Self { base_url, comic_url, client, download_path, comic_name }
+        Self { base_url, _comic_url: comic_url, client, download_path, comic_name }
     }
 }
 
 impl SiteDownloader for ScanitaOrg {}
 
-#[allow(unused_variables)]
 impl SiteDownloaderFunctions for ScanitaOrg {
     fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError> {
         if !self.download_path.exists() {

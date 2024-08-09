@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::{collections::HashSet, fs::{self, File}, io::{self, copy}};
 
 use reqwest::blocking::Client;
@@ -8,7 +6,7 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub struct ZerocalcareNet {
-    base_url: String,
+    _base_url: String,
     comic_url: String,
     client: Client,
     download_path: PathBuf,
@@ -24,7 +22,7 @@ impl ZerocalcareNet {
         let comic_url = comic_path.replace(&base_url, "");
         let download_path = Path::new(&comic_url.replace("/storie-a-fumetti/", "").strip_suffix("/").unwrap()).to_owned();
         let comic_name = comic_path.replace("https://www.zerocalcare.net/storie-a-fumetti/", "").strip_suffix("/").expect("couldn't find comic name").into();
-        Self { base_url, comic_url, client, download_path, comic_name }
+        Self { _base_url: base_url, comic_url, client, download_path, comic_name }
     }
 }
 
