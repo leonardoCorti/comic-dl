@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         url = read_from_terminal().trim().to_string();
         println!("select function:\n 1)download\n 2)create kobo install\n");
         match read_from_terminal().trim().to_string().as_str() {
-            "1" => { /*continue*/}
+            "1" => {/*continue*/}
             "2" =>{
                 interactive_kobo_installation(url)?;
                 return Ok(());
@@ -132,7 +132,7 @@ cd "$(dirname "$0")"
             .file_name().unwrap()
             .to_str().unwrap()
             .to_string())
-        .filter(|e| e.ends_with("sh"))
+        .filter(|e| e.ends_with("sh") && e != "update.sh")
         .collect();
 
     if list_of_file.len() > 1 {
