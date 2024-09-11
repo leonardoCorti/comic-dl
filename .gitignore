@@ -1,3 +1,6 @@
 /target
 /release
 /test
+make_releases.sh
+env.sh
+session.vim
