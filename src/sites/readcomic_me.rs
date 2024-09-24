@@ -6,6 +6,27 @@ use std::{fs::{self, File}, io, path::{Path, PathBuf}};
 use super::*;
 
 #[derive(Debug, Clone)]
+pub struct ReadcomicMeStrategy ;
+
+impl ComicDownloader for ReadcomicMeStrategy{
+    fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError> {
+        todo!()
+    }
+
+    fn download_page(&self, link: &str, issue_path: &Path, page_number: u32) -> Result<(), SiteDownloaderError> {
+        todo!()
+    }
+
+    fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError> {
+        todo!()
+    }
+
+    fn get_comic_name(&self, url: &str) -> &str {
+        todo!()
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct ReadcomicMe {
     base_url: String,
     comic_url: String,

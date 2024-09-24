@@ -4,6 +4,28 @@ use reqwest::blocking::Client;
 
 use super::*;
 
+
+#[derive(Debug, Clone)]
+pub struct ZerocalcareNetStrategy;
+
+impl ComicDownloader for ZerocalcareNetStrategy{
+    fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError> {
+        todo!()
+    }
+
+    fn download_page(&self, link: &str, issue_path: &Path, page_number: u32) -> Result<(), SiteDownloaderError> {
+        todo!()
+    }
+
+    fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError> {
+        todo!()
+    }
+
+    fn get_comic_name(&self, url: &str) -> &str {
+        todo!()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ZerocalcareNet {
     base_url: String,
