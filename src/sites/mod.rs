@@ -1,9 +1,9 @@
 use std::{fmt::Debug, fs::{self, File}, io, path::{Path, PathBuf}, str::FromStr};
 
-use readcomic_me::{ReadcomicMe, ReadcomicMeStrategy};
-use reqwest::{blocking::Client, Url};
-use scanita_org::{ScanitaOrg, ScanitaOrgStrategy};
-use zerocalcare_net::{ZerocalcareNet, ZerocalcareNetStrategy};
+use readcomic_me::ReadcomicMeStrategy;
+use reqwest::blocking::Client;
+use scanita_org::ScanitaOrgStrategy;
+use zerocalcare_net::ZerocalcareNetStrategy;
 
 pub mod readcomic_me;
 pub mod zerocalcare_net;
@@ -62,12 +62,12 @@ pub struct ComicUrl{
 #[allow(dead_code)]
 impl ComicUrl {
 
-    fn new(url: &str) -> Result<ComicUrl, SiteDownloaderError> {
+    pub fn new(url: &str) -> Result<ComicUrl, SiteDownloaderError> {
         let url = url
             .to_string();
         let client = reqwest::blocking::Client::new();
         let site_downloader = identify_website(&url)?;
-        let comic_name = site_downloader.get_comic_name(&url)
+        let comic_name = site_downloader.get_comic_name(&client,&url)
             .to_string();
         let download_path = PathBuf::from_str(&comic_name)
             .expect("cannot create download folder");
@@ -83,19 +83,22 @@ impl ComicUrl {
     }
 
 
-    fn download_all(&self) -> Result<(), SiteDownloaderError> {
-        let issues = self.site_downloader.get_issues_list()?;
-        issues.iter().for_each(|e| self.site_downloader.download_issue(&e).unwrap());
+    pub fn download_all(&self) -> Result<(), SiteDownloaderError> {
+        let issues = self.site_downloader.get_issues_list(&self.client, &self.url)?;
+        issues.iter().for_each(|e| {
+            self.site_downloader.download_issue(&self.client, &self.download_path, &e).unwrap();
+            self.create_volume(e, &self.download_path.join(e.name.clone())).expect("cannot create volume");
+        });
         return Ok(());
     }
 
-    fn create_volume(&self, issue_name: &Issue, issue_path: PathBuf) -> Result<(), SiteDownloaderError> {
+    pub fn create_volume(&self, issue_name: &Issue, issue_path: &PathBuf) -> Result<(), SiteDownloaderError> {
         match self.format{
             OutputFormats::Pdf => {
                 todo!()
             },
             OutputFormats::Cbz => {
-                let out_filename = format!("{}.cbz", issue_name.name);
+                let out_filename = format!("{}-{}.cbz", self.comic_name, issue_name.name);
                 let out_path = self.download_path.join(out_filename);
                 let file = File::create(&out_path).expect("error creating cbz");
                 let mut zip = zip::ZipWriter::new(file);
@@ -118,7 +121,7 @@ impl ComicUrl {
         return Ok(());
     }
 
-    fn change_path(&mut self, new_path_str: &str) -> Result<(), SiteDownloaderError> {
+    pub fn change_path(&mut self, new_path_str: &str) -> Result<(), SiteDownloaderError> {
         let new_path = Path::new(new_path_str);
         if !new_path.exists() { return Err(SiteDownloaderError::FileSystemError) };
         self.download_path = new_path.to_path_buf();
@@ -131,9 +134,9 @@ fn identify_website(url: &str) -> Result<Box<dyn ComicDownloader>, SiteDownloade
     match reqwest::Url::parse(url){
         Ok(parsed_url) => {
             match parsed_url.domain().unwrap() {
-                "readcomic.me" => { return Ok(Box::new(readcomic_me::ReadcomicMeStrategy))},
-                "www.zerocalcare.net" => { return Ok(Box::new(zerocalcare_net::ZerocalcareNetStrategy))},
-                "scanita.org" => { return Ok(Box::new(scanita_org::ScanitaOrgStrategy))},
+                "readcomic.me" => { return Ok(Box::new(ReadcomicMeStrategy))},
+                "www.zerocalcare.net" => { return Ok(Box::new(ZerocalcareNetStrategy))},
+                "scanita.org" => { return Ok(Box::new(ScanitaOrgStrategy))},
                 _ => {return Err(SiteDownloaderError::ParsingError)} 
             }
         }, 
@@ -142,10 +145,10 @@ fn identify_website(url: &str) -> Result<Box<dyn ComicDownloader>, SiteDownloade
 }
 
 pub trait ComicDownloader: Send + Sync + Debug {
-    fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError>;
-    fn download_page(&self, link: &str, issue_path: &Path, page_number: u32) -> Result<(), SiteDownloaderError>;
-    fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError>;
-    fn get_comic_name(&self, url: &str) -> &str;
+    fn download_issue(&self, client: &Client, download_path: &PathBuf, issue: &Issue) -> Result<(), SiteDownloaderError>;
+    fn download_page(&self, client: &Client, link: &str, issue_path: &Path, page_number: u32) -> Result<(), SiteDownloaderError>;
+    fn get_issues_list(&self, client: &Client, url: &str) -> Result<Vec<Issue>, SiteDownloaderError>;
+    fn get_comic_name(&self, client: &Client,  url: &str) -> String;
 }
 
 pub trait SiteDownloader: Send + Sync + Debug {

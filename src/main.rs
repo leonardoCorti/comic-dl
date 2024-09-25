@@ -5,6 +5,8 @@ use std::sync::Arc;
 use std::{env, fs, thread};
 use std::io::{self, Write};
 
+use sites::ComicUrl;
+
 mod sites;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -55,7 +57,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let number_of_jobs = args.iter().filter(|e| e.starts_with("-J")).next();
 
     //start program
-    let mut comicdwl = sites::new_downloader(&url)?;
+    //let mut comicdwl = sites::new_downloader(&url)?;
+    let mut comicdwl = sites::ComicUrl::new(&url)?;
 
     if let Some(ref new_path) = custom_path {
         comicdwl.change_path(&new_path)?;
@@ -82,8 +85,10 @@ fn interactive_kobo_installation(url: String) -> Result<(), Box<dyn Error>> {
 
 fn multithread_download(
     jobs_quantity: usize,
-    comicdwl: Box<dyn sites::SiteDownloader>,
+    comicdwl: ComicUrl,
 ) -> Result<(), Box<dyn Error>> {
+    todo!();
+    /*
     let issue_list = comicdwl.get_issues_list()?;
     println!("starting download with {jobs_quantity} threads" );
     let comicdwl_arc = Arc::new(comicdwl);
@@ -101,6 +106,7 @@ fn multithread_download(
     Ok(for handle in handles{
         handle.join().unwrap();
     })
+    */
 }
 
 fn read_from_terminal() -> String {

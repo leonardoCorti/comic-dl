@@ -8,20 +8,21 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct ReadcomicMeStrategy ;
 
+#[allow(unused_variables)]
 impl ComicDownloader for ReadcomicMeStrategy{
-    fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError> {
+    fn download_issue(&self, client: &Client, download_path: &PathBuf, issue: &Issue) -> Result<(), SiteDownloaderError> {
         todo!()
     }
 
-    fn download_page(&self, link: &str, issue_path: &Path, page_number: u32) -> Result<(), SiteDownloaderError> {
+    fn download_page(&self, client: &Client, link: &str, issue_path: &Path, page_number: u32) -> Result<(), SiteDownloaderError> {
         todo!()
     }
 
-    fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError> {
+    fn get_issues_list(&self, client: &Client, url: &str) -> Result<Vec<Issue>, SiteDownloaderError> {
         todo!()
     }
 
-    fn get_comic_name(&self, url: &str) -> &str {
+    fn get_comic_name(&self, client: &Client,  url: &str) -> String {
         todo!()
     }
 }
