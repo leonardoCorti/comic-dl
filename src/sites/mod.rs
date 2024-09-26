@@ -39,8 +39,8 @@ impl std::error::Error for SiteDownloaderError {
 
 #[derive(Debug)]
 pub struct Issue{
-    name: String,
-    link: String,
+    pub name: String,
+    pub link: String,
 }
 
 #[allow(dead_code)]
@@ -51,12 +51,12 @@ pub enum OutputFormats{
 
 #[allow(dead_code)]
 pub struct ComicUrl{
-    url: String,
-    client: Client,
-    download_path: PathBuf,
-    comic_name: String,
-    format: OutputFormats,
-    site_downloader: Box<dyn ComicDownloader>,
+    pub url: String,
+    pub client: Client,
+    pub download_path: PathBuf,
+    pub comic_name: String,
+    pub format: OutputFormats,
+    pub site_downloader: Box<dyn ComicDownloader>,
 }
 
 #[allow(dead_code)]
@@ -126,6 +126,10 @@ impl ComicUrl {
         if !new_path.exists() { return Err(SiteDownloaderError::FileSystemError) };
         self.download_path = new_path.to_path_buf();
         return Ok(());
+    }
+
+    pub fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError> {
+        self.site_downloader.get_issues_list(&self.client, &self.url)
     }
 }
 

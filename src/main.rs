@@ -87,8 +87,6 @@ fn multithread_download(
     jobs_quantity: usize,
     comicdwl: ComicUrl,
 ) -> Result<(), Box<dyn Error>> {
-    todo!();
-    /*
     let issue_list = comicdwl.get_issues_list()?;
     println!("starting download with {jobs_quantity} threads" );
     let comicdwl_arc = Arc::new(comicdwl);
@@ -99,14 +97,24 @@ fn multithread_download(
         }
         let comicdwl_thread = comicdwl_arc.clone();
         let handle = thread::spawn(move  || {
-            comicdwl_thread.download_issue(&issue).unwrap();
+            comicdwl_thread
+                .site_downloader
+                .download_issue(
+                    &comicdwl_thread.client,
+                    &comicdwl_thread.download_path,
+                    &issue)
+                .expect("couldn't download issue");
+            comicdwl_thread.create_volume(
+                &issue,
+                &comicdwl_thread.download_path
+                    .join(issue.name.clone())
+            ).expect("couldn't create volume");
         });
         handles.push_back(handle);
     }
     Ok(for handle in handles{
         handle.join().unwrap();
     })
-    */
 }
 
 fn read_from_terminal() -> String {
