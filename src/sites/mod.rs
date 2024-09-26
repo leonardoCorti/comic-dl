@@ -154,31 +154,3 @@ pub trait ComicDownloader: Send + Sync + Debug {
     fn get_issues_list(&self, client: &Client, url: &str) -> Result<Vec<Issue>, SiteDownloaderError>;
     fn get_comic_name(&self, client: &Client,  url: &str) -> String;
 }
-
-pub trait SiteDownloader: Send + Sync + Debug {
-    fn download_issue(&self, issue: &Issue) -> Result<(), SiteDownloaderError>;
-    fn download_page(&self, link: &str, issue_path: &Path, page_number: u32) -> Result<(), SiteDownloaderError>;
-    fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError>;
-    fn create_cbz(&self, issue_name: &Issue, issue_path: PathBuf) -> Result<(), SiteDownloaderError>;
-    fn change_path(&mut self, new_path: &str) -> Result<(), SiteDownloaderError>;
-    fn get_comic_name(&self) -> &str;
-    fn download_all(&self) -> Result<(), SiteDownloaderError> {
-        let issues = self.get_issues_list()?;
-        issues.iter().for_each(|e| self.download_issue(&e).unwrap());
-        return Ok(());
-    }
-}
-
-pub fn new_downloader(url: &str) -> Result<Box<dyn SiteDownloader>, SiteDownloaderError> {
-    match reqwest::Url::parse(url){
-        Ok(parsed_url) => {
-            match parsed_url.domain().unwrap() {
-                "readcomic.me" => { return Ok(Box::new(readcomic_me::ReadcomicMe::new(url)))},
-                "www.zerocalcare.net" => { return Ok(Box::new(zerocalcare_net::ZerocalcareNet::new(url)))},
-                "scanita.org" => { return Ok(Box::new(scanita_org::ScanitaOrg::new(url)))},
-                _ => {return Err(SiteDownloaderError::ParsingError)} 
-            }
-        }, 
-        Err(_) => {return Err(SiteDownloaderError::ParsingError)},
-    }
-}

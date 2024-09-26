@@ -135,8 +135,8 @@ r#"#!/bin/sh
 cd "$(dirname "$0")"
 ./comic-dl-armv7-linux {url}"#); 
     let script = script.replace("\\", "/");
-    let comic_dw = sites::new_downloader(&url)?;
-    let comic_name = comic_dw.get_comic_name();
+    let comic_dw = sites::ComicUrl::new(&url)?;
+    let comic_name = &comic_dw.comic_name;
 
     let mut script_file = File::create(installation_path.join(format!("{comic_name}.sh")))?;
     script_file.write_all(script.as_bytes())?;
