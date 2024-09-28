@@ -49,6 +49,16 @@ pub enum OutputFormats{
     Cbz,
 }
 
+impl OutputFormats {
+    fn format_string(&self) -> &str {
+        match self{
+            OutputFormats::Pdf => "pdf",
+            OutputFormats::Cbz => "cbz",
+        }
+    
+    }
+}
+
 #[allow(dead_code)]
 pub struct ComicUrl{
     pub url: String,
@@ -93,21 +103,21 @@ impl ComicUrl {
     }
 
     pub fn create_volume(&self, issue_name: &Issue, issue_path: &PathBuf) -> Result<(), SiteDownloaderError> {
+        let out_filename = format!("{}-{}.{}", self.comic_name, issue_name.name, self.format.format_string());
+        let files: Vec<_> = fs::read_dir(&issue_path).expect("could not read files")
+            .filter_map(|entry| entry.ok())
+            .filter_map(|entry| entry.path().to_str().map(|s| s.to_string()))
+            .collect();
+        let out_path = self.download_path.join(out_filename);
         match self.format{
             OutputFormats::Pdf => {
                 todo!()
             },
             OutputFormats::Cbz => {
-                let out_filename = format!("{}-{}.cbz", self.comic_name, issue_name.name);
-                let out_path = self.download_path.join(out_filename);
-                let file = File::create(&out_path).expect("error creating cbz");
+                let file = File::create(&out_path).expect("error creating output file");
                 let mut zip = zip::ZipWriter::new(file);
                 let options = zip::write::SimpleFileOptions::default()
                     .compression_method(zip::CompressionMethod::Deflated);
-                let files: Vec<_> = fs::read_dir(&issue_path).expect("error creating cbz")
-                    .filter_map(|entry| entry.ok())
-                    .filter_map(|entry| entry.path().to_str().map(|s| s.to_string()))
-                    .collect();
                 for filename in files {
                     let name = Path::new(&filename).file_name().unwrap().to_str().unwrap();
                     let mut f = File::open(&filename).expect("error creating cbz");
