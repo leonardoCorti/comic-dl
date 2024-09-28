@@ -55,6 +55,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     // -J check
     let number_of_jobs = args.iter().filter(|e| e.starts_with("-J")).next();
+    // --pdf check
+    let is_pdf = args.contains(&"--pdf".to_string());
 
     //start program
     //let mut comicdwl = sites::new_downloader(&url)?;
@@ -62,6 +64,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if let Some(ref new_path) = custom_path {
         comicdwl.change_path(&new_path)?;
+    }
+    if is_pdf {
+        comicdwl.change_format(sites::OutputFormats::Pdf);
     }
 
     match number_of_jobs{
@@ -187,7 +192,7 @@ fn is_link(e: &String) -> bool {
 
 fn print_help() {
     println!(
-r#"Usage: comic-dl [-J<number of threads>] [-p <download path>] [--kobo-install] [link to the comic]
+r#"Usage: comic-dl [-J<number of threads>] [-p <download path>] [--pdf] [--kobo-install] [link to the comic]
 Download a comic in the current directory.
 will create a directory named after the comic and each chapter will have
 a cbz file named <comic name-chapter name>.cbz
@@ -195,5 +200,6 @@ a cbz file named <comic name-chapter name>.cbz
 options:
    -J<number of threads>    multithreading, one chapter per thread
    -p <download path>       custom download path
+   --pdf                    pdf output
    --kobo-install           setup the script to use on kobo"#);
 }

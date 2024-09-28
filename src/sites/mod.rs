@@ -128,6 +128,10 @@ impl ComicUrl {
         return Ok(());
     }
 
+    pub fn change_format(&mut self, new_format: OutputFormats) {
+        self.format = new_format;
+    }
+
     pub fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError> {
         self.site_downloader.get_issues_list(&self.client, &self.url)
     }

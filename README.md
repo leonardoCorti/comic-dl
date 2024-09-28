@@ -4,7 +4,7 @@ this is a command line program to download comics online in cbz format to read t
 it can be executed to download new issues and it will detect the already downloaded and avoid downloading them again.
 
 # usage
-`comic-dl [-J<number of threads>] [-p <download path>] [--kobo-install] [link to the comic]`
+`comic-dl [-J<number of threads>] [-p <download path>] [--pdf] [--kobo-install] [link to the comic]`
 
 it supports parallelization with the argument -J\<number of threads\>.
 
