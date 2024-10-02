@@ -1,7 +1,14 @@
-use std::{fmt::Debug, fs::{self, File}, io::{self, Cursor, Read}, path::{Path, PathBuf}, str::FromStr};
+use std::{fmt::Debug, fs::{self, File}, io, path::{Path, PathBuf}, str::FromStr};
+
+#[cfg(feature = "pdf")]
+use std::io::{Cursor, Read};
+
+#[cfg(feature = "pdf")]
 extern crate printpdf;
+#[cfg(feature = "pdf")]
 extern crate image as img;
 
+#[cfg(feature = "pdf")]
 use printpdf::*;
 
 use readcomic_me::ReadcomicMeStrategy;
@@ -121,20 +128,29 @@ impl ComicUrl {
         let out_path = self.download_path.join(out_filename);
         match self.format{
             OutputFormats::Pdf => {
-                let doc =  PdfDocument::empty(&self.comic_name);
-                for filename in files {
-                    let image = read_image(filename)?;
-                    let w = image.image.width.0 as f32;
-                    let h = image.image.height.0 as f32;
-                    let w_mm = w/300.0 * 25.4;
-                    let h_mm = h/300.0 * 25.4;
-                    
-                    let (page1, layer1) = doc.add_page(Mm(w_mm), Mm(h_mm), "Layer 1");
-                    let current_layer = doc.get_page(page1).get_layer(layer1);
-                    image.add_to_layer(current_layer.clone(), ImageTransform::default());
-               }
-                doc.save(&mut io::BufWriter::new(File::create(out_path).unwrap())).expect("error saving pdf");
+                #[allow(unused_assignments, unused_mut)]
+                let mut result: Option<()> = None;
+                #[cfg(feature = "pdf")] {
+                    let doc =  PdfDocument::empty(&self.comic_name);
+                    for filename in files {
+                        let image = read_image(filename)?;
+                        let w = image.image.width.0 as f32;
+                        let h = image.image.height.0 as f32;
+                        let w_mm = w/300.0 * 25.4;
+                        let h_mm = h/300.0 * 25.4;
 
+                        let (page1, layer1) = doc.add_page(Mm(w_mm), Mm(h_mm), "Layer 1");
+                        let current_layer = doc.get_page(page1).get_layer(layer1);
+                        image.add_to_layer(current_layer.clone(), ImageTransform::default());
+                    }
+                    doc.save(&mut io::BufWriter::new(File::create(out_path).unwrap()))
+                        .expect("error creating pdf");
+                    result = Some(());
+                }
+                if result.is_none() {
+                    println!("pdf feature is not enabled");
+                    return Err(SiteDownloaderError::ImageError);
+                }
             },
             OutputFormats::Cbz => {
                 let file = File::create(&out_path).expect("error creating output file");
@@ -191,6 +207,7 @@ impl ComicUrl {
     }
 }
 
+#[cfg(feature = "pdf")]
 fn read_image(filename: String) -> Result<Image,SiteDownloaderError> {
     let mut image_file = File::open(filename).expect("error opening file");
     let mut buffer = Vec::new();

@@ -1,11 +1,16 @@
 [package]
 name = "comic-dl"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 
+[features]
+default = ["pdf"]
+
+pdf = ["image", "printpdf"]
+
 [dependencies]
-image = "0.25.2"
-printpdf = {version="0.7.0", features=["embedded_images"]}
+image = {version="0.25.2", optional=true}
+printpdf = {version="0.7.0", features=["embedded_images"], optional=true}
 regex = "1.10.5"
 reqwest = {version="0.12.5", default-features = false,  features=["blocking", "rustls-tls"]}
 scraper = "0.19.1"

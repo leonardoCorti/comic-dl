@@ -18,7 +18,7 @@ release_linux_x86:
 	mkdir -p release
 	cp ./target/x86_64-unknown-linux-gnu/release/comic-dl ./release/comic-dl-x86-64-linux
 release_linux_armv7:
-	$(HOME)/.cargo/bin/cargo build --release --target armv7-unknown-linux-musleabihf
+	$(HOME)/.cargo/bin/cargo build --release --no-default-features --target armv7-unknown-linux-musleabihf
 	mkdir -p release
 	cp ./target/armv7-unknown-linux-musleabihf/release/comic-dl ./release/comic-dl-armv7-linux
 
