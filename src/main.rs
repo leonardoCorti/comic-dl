@@ -55,12 +55,25 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     // -J check
     let number_of_jobs = args.iter().filter(|e| e.starts_with("-J")).next();
+    // -sf check
+    let skip_first = args.iter().filter(|e| e.starts_with("-sf")).next();
+    // -sl check
+    let skip_last = args.iter().filter(|e| e.starts_with("-sl")).next();
     // --pdf check
     let is_pdf = args.contains(&"--pdf".to_string());
 
     //start program
-    //let mut comicdwl = sites::new_downloader(&url)?;
     let mut comicdwl = sites::ComicUrl::new(&url)?;
+
+    if let Some(skip) = skip_first {
+        let skip_number: usize = skip.replace("-sf", "").parse()?;
+        comicdwl.change_skip_first(skip_number);
+    }
+
+    if let Some(skip) = skip_last {
+        let skip_number: usize = skip.replace("-sl", "").parse()?;
+        comicdwl.change_skip_lasts(skip_number);
+    }
 
     if let Some(ref new_path) = custom_path {
         comicdwl.change_path(&new_path)?;
@@ -199,6 +212,8 @@ a cbz file named <comic name-chapter name>.cbz
 
 options:
    -J<number of threads>    multithreading, one chapter per thread
+   -sf<number of skips>     skip the first N issues from the download
+   -sl<number of skips>     skip the last N issues from the download
    -p <download path>       custom download path
    --pdf                    pdf output
    --kobo-install           setup the script to use on kobo"#);

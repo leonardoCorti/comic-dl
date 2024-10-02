@@ -42,7 +42,7 @@ impl std::error::Error for SiteDownloaderError {
 
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Issue{
     pub name: String,
     pub link: String,
@@ -72,6 +72,8 @@ pub struct ComicUrl{
     pub comic_name: String,
     pub format: OutputFormats,
     pub site_downloader: Box<dyn ComicDownloader>,
+    pub skip_first: usize,
+    pub skip_last: usize,
 }
 
 #[allow(dead_code)]
@@ -87,6 +89,8 @@ impl ComicUrl {
         let download_path = PathBuf::from_str(&comic_name)
             .expect("cannot create download folder");
         let format = OutputFormats::Cbz;
+        let skip_first = 0;
+        let skip_last = 0;
 
         return Ok(ComicUrl{ 
             url,
@@ -94,12 +98,13 @@ impl ComicUrl {
             download_path, 
             comic_name,
             format,
-            site_downloader });
+            site_downloader,
+            skip_first,
+            skip_last, });
     }
 
-
     pub fn download_all(&self) -> Result<(), SiteDownloaderError> {
-        let issues = self.site_downloader.get_issues_list(&self.client, &self.url)?;
+        let issues = self.get_issues_list()?;
         issues.iter().for_each(|e| {
             self.site_downloader.download_issue(&self.client, &self.download_path, &e).unwrap();
             self.create_volume(e, &self.download_path.join(e.name.clone())).expect("cannot create volume");
@@ -160,8 +165,29 @@ impl ComicUrl {
         self.format = new_format;
     }
 
+    pub fn change_skip_first(&mut self, skip: usize) {
+        self.skip_first = skip;
+    }
+
+    pub fn change_skip_lasts(&mut self, skip: usize) {
+        self.skip_last = skip;
+    }
+
     pub fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError> {
-        self.site_downloader.get_issues_list(&self.client, &self.url)
+        let result: Vec<Issue> = self.site_downloader.get_issues_list(&self.client, &self.url)?;
+        let total_issues = result.len();
+
+        if total_issues == 0 {
+            return Ok(vec![]);
+        }
+        let start = self.skip_first.min(total_issues); 
+        let end = total_issues.saturating_sub(self.skip_last); 
+        if start >= end {
+            return Ok(vec![]);
+        }
+        let sliced_result = result[start..end].to_vec();
+
+        Ok(sliced_result)
     }
 }
 
