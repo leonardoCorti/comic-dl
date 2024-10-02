@@ -143,9 +143,9 @@ impl ComicUrl {
                     io::copy(&mut f, &mut zip).expect("error creating cbz");
                 }
                 zip.finish().expect("error creating cbz");
-                fs::remove_dir_all(&issue_path).expect("couldn't clean source directory");
             },
         }
+        fs::remove_dir_all(&issue_path).expect("couldn't clean source directory");
         return Ok(());
     }
 
