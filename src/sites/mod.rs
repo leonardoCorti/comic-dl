@@ -1,4 +1,8 @@
-use std::{fmt::Debug, fs::{self, File}, io, path::{Path, PathBuf}, str::FromStr};
+use std::{fmt::Debug, fs::{self, File}, io::{self, Cursor, Read}, path::{Path, PathBuf}, str::FromStr};
+extern crate printpdf;
+extern crate image as img;
+
+use printpdf::*;
 
 use readcomic_me::ReadcomicMeStrategy;
 use reqwest::blocking::Client;
@@ -14,6 +18,7 @@ pub enum SiteDownloaderError{
     ParsingError,
     NotFound,
     FileSystemError,
+    ImageError,
 }
 
 impl std::fmt::Display for SiteDownloaderError {
@@ -111,7 +116,20 @@ impl ComicUrl {
         let out_path = self.download_path.join(out_filename);
         match self.format{
             OutputFormats::Pdf => {
-                todo!()
+                let doc =  PdfDocument::empty(&self.comic_name);
+                for filename in files {
+                    let image = read_image(filename)?;
+                    let w = image.image.width.0 as f32;
+                    let h = image.image.height.0 as f32;
+                    let w_mm = w/300.0 * 25.4;
+                    let h_mm = h/300.0 * 25.4;
+                    
+                    let (page1, layer1) = doc.add_page(Mm(w_mm), Mm(h_mm), "Layer 1");
+                    let current_layer = doc.get_page(page1).get_layer(layer1);
+                    image.add_to_layer(current_layer.clone(), ImageTransform::default());
+               }
+                doc.save(&mut io::BufWriter::new(File::create(out_path).unwrap())).expect("error saving pdf");
+
             },
             OutputFormats::Cbz => {
                 let file = File::create(&out_path).expect("error creating output file");
@@ -145,6 +163,43 @@ impl ComicUrl {
     pub fn get_issues_list(&self) -> Result<Vec<Issue>, SiteDownloaderError> {
         self.site_downloader.get_issues_list(&self.client, &self.url)
     }
+}
+
+fn read_image(filename: String) -> Result<Image,SiteDownloaderError> {
+    let mut image_file = File::open(filename).expect("error opening file");
+    let mut buffer = Vec::new();
+    image_file.read_to_end(&mut buffer).unwrap();
+    let format = img::guess_format(&buffer).unwrap();
+    let cursor = Cursor::new(buffer);
+    let image = match format{
+        ::image::ImageFormat::Png => {
+            Image::try_from( 
+                image_crate::codecs::png::PngDecoder::new(cursor)
+                    .expect("couldn't decode image"))
+                .unwrap()
+        },
+        ::image::ImageFormat::Jpeg => {
+            Image::try_from( 
+                image_crate::codecs::jpeg::JpegDecoder::new(cursor)
+                    .expect("couldn't decode image"))
+                .unwrap()
+        },
+        ::image::ImageFormat::WebP => {
+            let webp_image = img::load(cursor, img::ImageFormat::WebP).unwrap();
+            let mut png_bytes: Vec<u8> = Vec::new();
+            webp_image.write_to(
+                &mut Cursor::new(&mut png_bytes),
+                img::ImageFormat::Png)
+                .unwrap();
+            let png_cursor = Cursor::new(png_bytes);
+            Image::try_from( 
+                image_crate::codecs::png::PngDecoder::new(png_cursor)
+                    .expect("couldn't decode image"))
+                .unwrap()
+        },
+        _ => return Err(SiteDownloaderError::ImageError),
+    };
+    Ok(image)
 }
 
 fn identify_website(url: &str) -> Result<Box<dyn ComicDownloader>, SiteDownloaderError> {
