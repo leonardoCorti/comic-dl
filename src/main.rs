@@ -2,102 +2,96 @@ use std::collections::VecDeque;
 use std::error::Error;
 use std::fs::File;
 use std::sync::Arc;
-use std::{env, fs, thread};
-use std::io::{self, Write};
+use std::{fs, thread};
+use std::io::Write;
+use clap::Parser;
 
 use sites::ComicUrl;
 
 mod sites;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[derive(Parser, Debug)]
+#[command(version, about)]
+struct Args {
+    /// Number of threads to use for dowloading
+    #[arg(short = 'J', long, default_value = "1")]
+    threads: usize,
 
-    let args: Vec<String> = env::args().collect();
-    // --help check
-    if args.iter().filter(|e| *e=="-h" || *e=="--help").count() != 0 {
-        print_help();
-        return Ok(());
+    /// Number of issues to skip from the start
+    #[arg(short= 'S', long, value_name = "SKIP_COUNT", default_value = "0")]
+    skip_start: usize,
+
+    /// Number of issues to skip from the last
+    #[arg(short= 'L', long, value_name = "SKIP_COUNT", default_value = "0")]
+    skip_last: usize,
+
+    /// Download path
+    #[arg(short = 'p', long)]
+    path: Option<String>,
+
+    /// Download as PDF
+    #[arg(long)]
+    pdf: bool,
+
+    /// Install to Kobo after download
+    #[arg(long)]
+    kobo_install: bool,
+
+    /// The link to the comic
+    #[arg(required = true)]
+    comic_link: String,
+
+    /// interactive mode (todo!)
+    #[arg(short= 'I', long)]
+    interactive: bool,
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let args = Args::parse();
+
+    let url = args.comic_link;
+    if !is_link(&url) {
+        eprintln!("the link provided is not a valid url");
+        std::process::exit(1);
     }
-    // url check
-    let url: String;
-    if let Some(link) = args.iter().filter(|e| is_link(e)).next() {
-        url = link.to_string();
-    } else {
-        println!("insert link to comic: ");
-        url = read_from_terminal().trim().to_string();
-        println!("select function:\n 1)download\n 2)create kobo install\n");
-        match read_from_terminal().trim().to_string().as_str() {
-            "1" => {/*continue*/}
-            "2" =>{
-                interactive_kobo_installation(url)?;
-                return Ok(());
-            }
-            _ => {
-                println!("invalid option");
-                return Ok(());
-            }
-        }
+
+    if args.interactive {
+        todo!();
     }
-    // --kobo-install check
-    if let Some(_install_flag) = args.iter().position(|e| e == "--kobo-install"){
+
+    if args.kobo_install {
         generate_install(url)?;
         println!("copy the file in the install directory to the kobo");
         return Ok(());
     }
-    // -p check
-    let mut custom_path: Option<String> = Option::None;
-    if let Some(p_flag_position) = args.iter().position(|e| e == "-p"){
-        if let Some(new_path) = args.iter().nth(p_flag_position +1){
-            custom_path = Some(new_path.to_string());
-        } else {
-            println!("no path detected after -p flag");
-            return Ok(());
-        }
-    }
-    // -J check
-    let number_of_jobs = args.iter().filter(|e| e.starts_with("-J")).next();
-    // -sf check
-    let skip_first = args.iter().filter(|e| e.starts_with("-sf")).next();
-    // -sl check
-    let skip_last = args.iter().filter(|e| e.starts_with("-sl")).next();
-    // --pdf check
-    let is_pdf = args.contains(&"--pdf".to_string());
-
-    //start program
+    
     let mut comicdwl = sites::ComicUrl::new(&url)?;
 
-    if let Some(skip) = skip_first {
-        let skip_number: usize = skip.replace("-sf", "").parse()?;
-        comicdwl.change_skip_first(skip_number);
+    if args.skip_start > 0 {
+        comicdwl.change_skip_first(args.skip_start);
     }
 
-    if let Some(skip) = skip_last {
-        let skip_number: usize = skip.replace("-sl", "").parse()?;
-        comicdwl.change_skip_lasts(skip_number);
+    if args.skip_last > 0 {
+        comicdwl.change_skip_lasts(args.skip_last);
     }
 
-    if let Some(ref new_path) = custom_path {
+    if let Some(ref new_path) = args.path {
         comicdwl.change_path(&new_path)?;
     }
-    if is_pdf {
+
+    if args.pdf {
         comicdwl.change_format(sites::OutputFormats::Pdf);
     }
 
-    match number_of_jobs{
-        Some(jobs_argument) => {
-            let jobs_quantity: usize = jobs_argument.replace("-J", "").parse()?;
-            multithread_download(jobs_quantity, comicdwl)?;
+    match args.threads {
+        0 => {
+            comicdwl.download_all()?
         },
-        None => {
-            comicdwl.download_all()?;
-        },
+        number => {
+            multithread_download(number, comicdwl)?;
+        }
     }
 
-    return Ok(());
-}
-
-fn interactive_kobo_installation(url: String) -> Result<(), Box<dyn Error>> {
-    generate_install(url)?;
-    println!("copy the file in the install directory to the kobo");
     return Ok(());
 }
 
@@ -133,13 +127,6 @@ fn multithread_download(
     Ok(for handle in handles{
         handle.join().unwrap();
     })
-}
-
-fn read_from_terminal() -> String {
-    io::stdout().flush().unwrap();
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).expect("couldn't read from terminal");
-    return input;
 }
 
 fn generate_install(url: String) -> Result<(), Box<dyn Error>>{
@@ -201,20 +188,4 @@ fn is_elf(first_byes: &[u8;4]) -> bool {
 
 fn is_link(e: &String) -> bool {
     return e.starts_with("https://") || e.starts_with("http://") ;
-}
-
-fn print_help() {
-    println!(
-r#"Usage: comic-dl [-J<number of threads>] [-p <download path>] [--pdf] [--kobo-install] [link to the comic]
-Download a comic in the current directory.
-will create a directory named after the comic and each chapter will have
-a cbz file named <comic name-chapter name>.cbz
-
-options:
-   -J<number of threads>    multithreading, one chapter per thread
-   -sf<number of skips>     skip the first N issues from the download
-   -sl<number of skips>     skip the last N issues from the download
-   -p <download path>       custom download path
-   --pdf                    pdf output
-   --kobo-install           setup the script to use on kobo"#);
 }

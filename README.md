@@ -4,15 +4,25 @@ this is a command line program to download comics online in cbz format to read t
 it can be executed to download new issues and it will detect the already downloaded and avoid downloading them again.
 
 # usage
-`comic-dl [-J<number of threads>] [-sl<number of issues to skip>] [-sf<number of issues to skip>] [-p <download path>] [--pdf] [--kobo-install] [link to the comic]`
+```bash
+Usage: comic-dl.exe [OPTIONS] <COMIC_LINK>
 
-it supports parallelization with the argument -J\<number of threads\>.
+Arguments:
+  <COMIC_LINK>  The link to the comic
+
+Options:
+  -J, --threads <THREADS>        Number of threads to use for dowloading [default: 1]
+  -S, --skip-start <SKIP_COUNT>  Number of issues to skip from the start [default: 0]
+  -L, --skip-last <SKIP_COUNT>   Number of issues to skip from the last [default: 0]
+  -p, --path <PATH>              Download path
+      --pdf                      Download as PDF
+      --kobo-install             Install to Kobo after download
+  -I, --interactive              interactive mode (todo!)
+  -h, --help                     Print help
+  -V, --version                  Print version
+```
 
 with the -p flag a custom download path can be used, a subdirectory with the name of the comic will still be created so the same download path can be used with different comics and it will still be organized
-
-the -sl and -sf flags are for skipping the first or last n issues.
-
-if launched without arguments it will ask for the link from terminal
 
 # how to use on kobo e-reader
 
