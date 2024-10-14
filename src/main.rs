@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::env::args;
 use std::error::Error;
 use std::fs::File;
 use std::sync::Arc;
@@ -16,6 +17,10 @@ struct Args {
     /// Number of threads to use for dowloading
     #[arg(short = 'J', long, default_value = "1")]
     threads: usize,
+
+    /// list supported websites
+    #[arg(long)]
+    list_websites: bool,
 
     /// Number of issues to skip from the start
     #[arg(short= 'S', long, value_name = "SKIP_COUNT", default_value = "0")]
@@ -38,7 +43,7 @@ struct Args {
     kobo_install: bool,
 
     /// The link to the comic
-    #[arg(required = true)]
+    #[arg(required = false)]
     comic_link: String,
 
     /// interactive mode (todo!)
@@ -47,6 +52,13 @@ struct Args {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let raw_args: Vec<String> = args().collect();
+
+    if raw_args.contains(&"--list-websites".to_string()) {
+        print!("{}",sites::print_supported_websites());
+        std::process::exit(0);
+    }
+
     let args = Args::parse();
 
     let url = args.comic_link;

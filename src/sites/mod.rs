@@ -246,7 +246,6 @@ fn read_image(filename: String) -> Result<Image,SiteDownloaderError> {
 }
 
 fn identify_website(url: &str) -> Result<Box<dyn ComicDownloader>, SiteDownloaderError> {
-
     match reqwest::Url::parse(url){
         Ok(parsed_url) => {
             match parsed_url.domain().unwrap() {
@@ -258,6 +257,14 @@ fn identify_website(url: &str) -> Result<Box<dyn ComicDownloader>, SiteDownloade
         }, 
         Err(_) => {return Err(SiteDownloaderError::ParsingError)},
     }
+}
+
+pub fn print_supported_websites() -> String {
+return r#"
+- https://readcomic.me
+- https://www.zerocalcare.net
+- https://scanita.org
+"#.to_string();
 }
 
 pub trait ComicDownloader: Send + Sync + Debug {
