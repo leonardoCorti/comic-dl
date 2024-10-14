@@ -65,7 +65,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
     
-    let mut comicdwl = sites::ComicUrl::new(&url)?;
+    let mut comicdwl = sites::ComicUrl::new(&url).expect("website not supported");
 
     if args.skip_start > 0 {
         comicdwl.change_skip_first(args.skip_start);
